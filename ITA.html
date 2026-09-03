@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <script src="https://cdn.jsdelivr.net/npm/whatareyoutryingtodo/disable-devtool.min.js" disable-devtool-auto=""></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Infiltrating The Airship</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      overflow: hidden;
+    }
+    #ruffle {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      overflow: hidden;
+    }
+    #player {
+      width: 100%;
+      height: 100%;
+      transform: scale(1);   /* 🔥 default zoom (1 = normal, 2 = double size) */
+      transform-origin: center center;
+    }
+    #controls {
+      position: absolute;
+      bottom: 15px;
+      right: 15px;
+      z-index: 999;
+    }
+    #controls button {
+      background: rgba(255,255,255,0.2);
+      color: #fff;
+      border: none;
+      padding: 8px 12px;
+      margin-left: 5px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 18px;
+    }
+    #controls button:hover {
+      background: rgba(255,255,255,0.4);
+    }
+  </style>
+</head>
+<body>
+  <div id="ruffle"></div>
+
+  <!-- Zoom controls -->
+  <div id="controls">
+    <button id="zoomOut">−</button>
+    <button id="zoomIn">+</button>
+  </div>
+
+  <script src="https://unpkg.com/@ruffle-rs/ruffle"></script>
+  <script>
+    window.RufflePlayer = window.RufflePlayer || {};
+    window.addEventListener("load", () => {
+      const ruffle = window.RufflePlayer.newest();
+      const player = ruffle.createPlayer();
+      player.id = "player";
+      document.getElementById("ruffle").appendChild(player);
+      player.load("infiltratingtheairship.swf"); // same folder as HTML
+    });
+
+    // Zoom controls
+    let zoom = 1.5; // default zoom
+    const playerEl = () => document.getElementById("player");
+
+    document.getElementById("zoomIn").addEventListener("click", () => {
+      zoom += 0.2;
+      playerEl().style.transform = `scale(${zoom})`;
+    });
+
+    document.getElementById("zoomOut").addEventListener("click", () => {
+      if (zoom > 0.4) { // prevent negative zoom
+        zoom -= 0.2;
+        playerEl().style.transform = `scale(${zoom})`;
+      }
+    });
+  </script>
+</body>
+</html>
