@@ -7,329 +7,99 @@
 
 	<base href="https://cdn.jsdelivr.net/gh/nawsif/host@main/swingo/">
 
-	<!-- Fix incorrect Construct asset URLs -->
 	<script>
-	(function () {
-		const NEW_BASE =
-			"https://cdn.jsdelivr.net/gh/nawsif/host@main/swingo/";
+(() => {
+	const CDN_BASE =
+		"https://cdn.jsdelivr.net/gh/tinklehost/hosting@main/swingo/";
 
-		function fixURL(url) {
-			if (typeof url !== "string")
-				return url;
+	const OriginalWorker = window.Worker;
 
-			let absolute;
+	window.Worker = function(url, options = {}) {
+		const originalURL = String(url);
 
-			try {
-				absolute = new URL(url, location.href).href;
-			}
-			catch {
-				return url;
-			}
+		/*
+			Fix Construct's dispatchworker.js.
 
-			/*
-				Fix anything trying to load from:
+			We CANNOT do:
 
-				https://nawsif.github.io/html/...
-				https://tinklehost.github.io/html/...
+			new Worker("https://cdn.jsdelivr.net/...")
 
-				and point it to:
+			because Worker() requires its initial script to be
+			same-origin.
 
-				https://cdn.jsdelivr.net/gh/tinklehost/hosting@main/swingo/...
-			*/
-
-			const badPrefixes = [
-				"https://nawsif.github.io/html/",
-				"https://tinklehost.github.io/html/"
-			];
-
-			for (const prefix of badPrefixes) {
-				if (absolute.startsWith(prefix)) {
-					const fixed =
-						NEW_BASE +
-						absolute.substring(prefix.length);
-
-					console.log(
-						"[Swingo URL Fix]",
-						absolute,
-						"->",
-						fixed
-					);
-
-					return fixed;
-				}
-			}
-
-			/*
-				Extra fallback specifically for c3runtime.js
-			*/
-			if (
-				absolute.endsWith(
-					"/html/scripts/c3runtime.js"
-				)
-			) {
-				const fixed =
-					NEW_BASE +
-					"scripts/c3runtime.js";
-
-				console.log(
-					"[Swingo c3runtime Fix]",
-					absolute,
-					"->",
-					fixed
-				);
-
-				return fixed;
-			}
-
-			return url;
-		}
-
-
-		/* ==============================================
-		   SCRIPT src INTERCEPTOR
-		   Catches:
-		   script.src = "..."
-		============================================== */
-
-		const scriptSrcDescriptor =
-			Object.getOwnPropertyDescriptor(
-				HTMLScriptElement.prototype,
-				"src"
-			);
-
+			Instead create a local blob worker which imports
+			the CDN worker.
+		*/
 		if (
-			scriptSrcDescriptor &&
-			scriptSrcDescriptor.get &&
-			scriptSrcDescriptor.set
+			originalURL.includes("/scripts/dispatchworker.js") ||
+			originalURL.endsWith("scripts/dispatchworker.js")
 		) {
-			Object.defineProperty(
-				HTMLScriptElement.prototype,
-				"src",
+			const realURL =
+				CDN_BASE + "scripts/dispatchworker.js";
+
+			console.log(
+				"[Swingo Worker Fix]",
+				originalURL,
+				"->",
+				realURL
+			);
+
+			let wrapperCode;
+
+			if (options && options.type === "module") {
+
+				// Module Worker
+				wrapperCode =
+					`import "${realURL}";`;
+
+			} else {
+
+				// Classic Worker
+				wrapperCode =
+					`importScripts("${realURL}");`;
+			}
+
+			const blob = new Blob(
+				[wrapperCode],
 				{
-					configurable: true,
-					enumerable:
-						scriptSrcDescriptor.enumerable,
-
-					get:
-						scriptSrcDescriptor.get,
-
-					set(value) {
-						return scriptSrcDescriptor.set.call(
-							this,
-							fixURL(String(value))
-						);
-					}
+					type: "application/javascript"
 				}
 			);
-		}
 
+			const blobURL =
+				URL.createObjectURL(blob);
 
-		/* ==============================================
-		   setAttribute INTERCEPTOR
-		   Catches:
-		   script.setAttribute("src", "...")
-		============================================== */
-
-		const originalSetAttribute =
-			Element.prototype.setAttribute;
-
-		Element.prototype.setAttribute =
-			function (name, value) {
-
-				if (
-					this instanceof HTMLScriptElement &&
-					String(name).toLowerCase() === "src"
-				) {
-					value = fixURL(String(value));
-				}
-
-				return originalSetAttribute.call(
-					this,
-					name,
-					value
-				);
-			};
-
-
-		/* ==============================================
-		   appendChild INTERCEPTOR
-		============================================== */
-
-		const originalAppendChild =
-			Node.prototype.appendChild;
-
-		Node.prototype.appendChild =
-			function (node) {
-
-				if (
-					node instanceof HTMLScriptElement &&
-					node.src
-				) {
-					const fixed =
-						fixURL(node.src);
-
-					if (fixed !== node.src) {
-						node.src = fixed;
-					}
-				}
-
-				return originalAppendChild.call(
-					this,
-					node
-				);
-			};
-
-
-		/* ==============================================
-		   insertBefore INTERCEPTOR
-		============================================== */
-
-		const originalInsertBefore =
-			Node.prototype.insertBefore;
-
-		Node.prototype.insertBefore =
-			function (node, referenceNode) {
-
-				if (
-					node instanceof HTMLScriptElement &&
-					node.src
-				) {
-					const fixed =
-						fixURL(node.src);
-
-					if (fixed !== node.src) {
-						node.src = fixed;
-					}
-				}
-
-				return originalInsertBefore.call(
-					this,
-					node,
-					referenceNode
-				);
-			};
-
-
-		/* ==============================================
-		   append() INTERCEPTOR
-		============================================== */
-
-		const originalAppend =
-			Element.prototype.append;
-
-		if (originalAppend) {
-			Element.prototype.append =
-				function (...nodes) {
-
-					for (const node of nodes) {
-						if (
-							node instanceof HTMLScriptElement &&
-							node.src
-						) {
-							const fixed =
-								fixURL(node.src);
-
-							if (fixed !== node.src) {
-								node.src = fixed;
-							}
-						}
-					}
-
-					return originalAppend.apply(
-						this,
-						nodes
-					);
-				};
-		}
-
-
-		/* ==============================================
-		   WEB WORKER INTERCEPTOR
-		============================================== */
-
-		const OriginalWorker =
-			window.Worker;
-
-		if (OriginalWorker) {
-			window.Worker =
-				function (url, options) {
-
-					return new OriginalWorker(
-						fixURL(String(url)),
-						options
-					);
-				};
-
-			window.Worker.prototype =
-				OriginalWorker.prototype;
-		}
-
-
-		/* ==============================================
-		   SHARED WORKER INTERCEPTOR
-		============================================== */
-
-		const OriginalSharedWorker =
-			window.SharedWorker;
-
-		if (OriginalSharedWorker) {
-			window.SharedWorker =
-				function (url, options) {
-
-					return new OriginalSharedWorker(
-						fixURL(String(url)),
-						options
-					);
-				};
-
-			window.SharedWorker.prototype =
-				OriginalSharedWorker.prototype;
-		}
-
-
-		/* ==============================================
-		   FETCH INTERCEPTOR
-		============================================== */
-
-		const originalFetch =
-			window.fetch;
-
-		window.fetch =
-			function (resource, options) {
-
-				if (typeof resource === "string") {
-					resource =
-						fixURL(resource);
-				}
-				else if (
-					typeof Request !== "undefined" &&
-					resource instanceof Request
-				) {
-					const fixed =
-						fixURL(resource.url);
-
-					if (fixed !== resource.url) {
-						resource =
-							new Request(
-								fixed,
-								resource
-							);
-					}
-				}
-
-				return originalFetch.call(
-					this,
-					resource,
+			const worker =
+				new OriginalWorker(
+					blobURL,
 					options
 				);
-			};
 
+			/*
+				Don't revoke instantly because the browser
+				still needs the blob during worker startup.
+			*/
+			setTimeout(() => {
+				URL.revokeObjectURL(blobURL);
+			}, 10000);
 
-		console.log(
-			"[Swingo URL Fix] Redirect stub installed"
+			return worker;
+		}
+
+		return new OriginalWorker(
+			url,
+			options
 		);
-	})();
-	</script>
+	};
+
+	window.Worker.prototype =
+		OriginalWorker.prototype;
+
+	console.log(
+		"[Swingo Worker Fix] Worker interceptor installed"
+	);
+})();
+</script>
 
 	<script src="https://tinklehost.github.io/intro.js"></script>
 
