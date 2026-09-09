@@ -4,37 +4,118 @@
 <head>
 	<meta charset="UTF-8">
 	<title>Swingo</title>
-  <base href="https://cdn.jsdelivr.net/gh/tinklehost/hosting@main/swingo/">
+
+	<base href="https://cdn.jsdelivr.net/gh/tinklehost/hosting@main/swingo/">
+
+	<!-- Redirect incorrect Construct runtime URL -->
+	<script>
+	(function () {
+		const OLD_BASE = "https://tinklehost.github.io/html/";
+		const NEW_BASE = "https://cdn.jsdelivr.net/gh/tinklehost/hosting@main/swingo/";
+
+		function fixURL(url) {
+			if (typeof url !== "string")
+				return url;
+
+			if (url.startsWith(OLD_BASE)) {
+				const fixed = NEW_BASE + url.substring(OLD_BASE.length);
+
+				console.log(
+					"[Swingo URL Fix]",
+					url,
+					"->",
+					fixed
+				);
+
+				return fixed;
+			}
+
+			return url;
+		}
+
+		// Intercept Web Workers
+		const OriginalWorker = window.Worker;
+
+		if (OriginalWorker) {
+			window.Worker = function (url, options) {
+				return new OriginalWorker(fixURL(String(url)), options);
+			};
+
+			window.Worker.prototype = OriginalWorker.prototype;
+		}
+
+		// Intercept Shared Workers
+		const OriginalSharedWorker = window.SharedWorker;
+
+		if (OriginalSharedWorker) {
+			window.SharedWorker = function (url, options) {
+				return new OriginalSharedWorker(fixURL(String(url)), options);
+			};
+
+			window.SharedWorker.prototype = OriginalSharedWorker.prototype;
+		}
+
+		// Intercept fetch()
+		const originalFetch = window.fetch;
+
+		window.fetch = function (resource, options) {
+			if (typeof resource === "string") {
+				resource = fixURL(resource);
+			}
+			else if (resource instanceof Request) {
+				const fixed = fixURL(resource.url);
+
+				if (fixed !== resource.url) {
+					resource = new Request(fixed, resource);
+				}
+			}
+
+			return originalFetch.call(this, resource, options);
+		};
+	})();
+	</script>
+
 	<script src="https://tinklehost.github.io/intro.js"></script>
+
 	<meta name="robots" content="noindex,nofollow" />
+
 	<meta name="viewport"
-		content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+		content="width=device-width,
+		initial-scale=1.0,
+		maximum-scale=1.0,
+		minimum-scale=1.0,
+		user-scalable=no">
 
 	<meta name="generator" content="Scirra Construct">
 
 	<link rel="manifest" href="appmanifest.json">
 
-
 	<link rel="stylesheet" href="style.css">
 	<link rel="stylesheet" href="file.css">
-
 </head>
 
 <body>
 
 	<script>
-		if (location.protocol.substr(0, 4) === "file")
-{
-	alert("Web exports won't work until you upload them. (When running on the file: protocol, browsers block many features from working for security reasons.)");
-}
+		if (location.protocol.substr(0, 4) === "file") {
+			alert(
+				"Web exports won't work until you upload them. " +
+				"(When running on the file: protocol, browsers block many features from working for security reasons.)"
+			);
+		}
 	</script>
+
 	<script src="box2d.wasm.js"></script>
+
 	<noscript>
 		<div id="notSupportedWrap">
 			<h2 id="notSupportedTitle">This content requires JavaScript</h2>
-			<p class="notSupportedMessage">JavaScript appears to be disabled. Please enable it to view this content.</p>
+			<p class="notSupportedMessage">
+				JavaScript appears to be disabled. Please enable it to view this content.
+			</p>
 		</div>
 	</noscript>
+
 	<script src="scripts/supportcheck.js"></script>
 	<script src="scripts/offlineclient.js" type="module"></script>
 	<script src="scripts/main.js" type="module"></script>
