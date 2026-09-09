@@ -5,24 +5,75 @@
 	<meta charset="UTF-8">
 	<title>Swingo</title>
 
-	<base href="https://cdn.jsdelivr.net/gh/tinklehost/hosting@main/swingo/">
+	<base href="https://cdn.jsdelivr.net/gh/nawsif/host@main/swingo/">
 
-	<!-- Redirect incorrect Construct runtime URL -->
+	<!-- Fix incorrect Construct asset URLs -->
 	<script>
 	(function () {
-		const OLD_BASE = "https://tinklehost.github.io/html/";
-		const NEW_BASE = "https://cdn.jsdelivr.net/gh/tinklehost/hosting@main/swingo/";
+		const NEW_BASE =
+			"https://cdn.jsdelivr.net/gh/nawsif/host@main/swingo/";
 
 		function fixURL(url) {
 			if (typeof url !== "string")
 				return url;
 
-			if (url.startsWith(OLD_BASE)) {
-				const fixed = NEW_BASE + url.substring(OLD_BASE.length);
+			let absolute;
+
+			try {
+				absolute = new URL(url, location.href).href;
+			}
+			catch {
+				return url;
+			}
+
+			/*
+				Fix anything trying to load from:
+
+				https://nawsif.github.io/html/...
+				https://tinklehost.github.io/html/...
+
+				and point it to:
+
+				https://cdn.jsdelivr.net/gh/tinklehost/hosting@main/swingo/...
+			*/
+
+			const badPrefixes = [
+				"https://nawsif.github.io/html/",
+				"https://tinklehost.github.io/html/"
+			];
+
+			for (const prefix of badPrefixes) {
+				if (absolute.startsWith(prefix)) {
+					const fixed =
+						NEW_BASE +
+						absolute.substring(prefix.length);
+
+					console.log(
+						"[Swingo URL Fix]",
+						absolute,
+						"->",
+						fixed
+					);
+
+					return fixed;
+				}
+			}
+
+			/*
+				Extra fallback specifically for c3runtime.js
+			*/
+			if (
+				absolute.endsWith(
+					"/html/scripts/c3runtime.js"
+				)
+			) {
+				const fixed =
+					NEW_BASE +
+					"scripts/c3runtime.js";
 
 				console.log(
-					"[Swingo URL Fix]",
-					url,
+					"[Swingo c3runtime Fix]",
+					absolute,
 					"->",
 					fixed
 				);
@@ -33,45 +84,250 @@
 			return url;
 		}
 
-		// Intercept Web Workers
-		const OriginalWorker = window.Worker;
+
+		/* ==============================================
+		   SCRIPT src INTERCEPTOR
+		   Catches:
+		   script.src = "..."
+		============================================== */
+
+		const scriptSrcDescriptor =
+			Object.getOwnPropertyDescriptor(
+				HTMLScriptElement.prototype,
+				"src"
+			);
+
+		if (
+			scriptSrcDescriptor &&
+			scriptSrcDescriptor.get &&
+			scriptSrcDescriptor.set
+		) {
+			Object.defineProperty(
+				HTMLScriptElement.prototype,
+				"src",
+				{
+					configurable: true,
+					enumerable:
+						scriptSrcDescriptor.enumerable,
+
+					get:
+						scriptSrcDescriptor.get,
+
+					set(value) {
+						return scriptSrcDescriptor.set.call(
+							this,
+							fixURL(String(value))
+						);
+					}
+				}
+			);
+		}
+
+
+		/* ==============================================
+		   setAttribute INTERCEPTOR
+		   Catches:
+		   script.setAttribute("src", "...")
+		============================================== */
+
+		const originalSetAttribute =
+			Element.prototype.setAttribute;
+
+		Element.prototype.setAttribute =
+			function (name, value) {
+
+				if (
+					this instanceof HTMLScriptElement &&
+					String(name).toLowerCase() === "src"
+				) {
+					value = fixURL(String(value));
+				}
+
+				return originalSetAttribute.call(
+					this,
+					name,
+					value
+				);
+			};
+
+
+		/* ==============================================
+		   appendChild INTERCEPTOR
+		============================================== */
+
+		const originalAppendChild =
+			Node.prototype.appendChild;
+
+		Node.prototype.appendChild =
+			function (node) {
+
+				if (
+					node instanceof HTMLScriptElement &&
+					node.src
+				) {
+					const fixed =
+						fixURL(node.src);
+
+					if (fixed !== node.src) {
+						node.src = fixed;
+					}
+				}
+
+				return originalAppendChild.call(
+					this,
+					node
+				);
+			};
+
+
+		/* ==============================================
+		   insertBefore INTERCEPTOR
+		============================================== */
+
+		const originalInsertBefore =
+			Node.prototype.insertBefore;
+
+		Node.prototype.insertBefore =
+			function (node, referenceNode) {
+
+				if (
+					node instanceof HTMLScriptElement &&
+					node.src
+				) {
+					const fixed =
+						fixURL(node.src);
+
+					if (fixed !== node.src) {
+						node.src = fixed;
+					}
+				}
+
+				return originalInsertBefore.call(
+					this,
+					node,
+					referenceNode
+				);
+			};
+
+
+		/* ==============================================
+		   append() INTERCEPTOR
+		============================================== */
+
+		const originalAppend =
+			Element.prototype.append;
+
+		if (originalAppend) {
+			Element.prototype.append =
+				function (...nodes) {
+
+					for (const node of nodes) {
+						if (
+							node instanceof HTMLScriptElement &&
+							node.src
+						) {
+							const fixed =
+								fixURL(node.src);
+
+							if (fixed !== node.src) {
+								node.src = fixed;
+							}
+						}
+					}
+
+					return originalAppend.apply(
+						this,
+						nodes
+					);
+				};
+		}
+
+
+		/* ==============================================
+		   WEB WORKER INTERCEPTOR
+		============================================== */
+
+		const OriginalWorker =
+			window.Worker;
 
 		if (OriginalWorker) {
-			window.Worker = function (url, options) {
-				return new OriginalWorker(fixURL(String(url)), options);
-			};
+			window.Worker =
+				function (url, options) {
 
-			window.Worker.prototype = OriginalWorker.prototype;
+					return new OriginalWorker(
+						fixURL(String(url)),
+						options
+					);
+				};
+
+			window.Worker.prototype =
+				OriginalWorker.prototype;
 		}
 
-		// Intercept Shared Workers
-		const OriginalSharedWorker = window.SharedWorker;
+
+		/* ==============================================
+		   SHARED WORKER INTERCEPTOR
+		============================================== */
+
+		const OriginalSharedWorker =
+			window.SharedWorker;
 
 		if (OriginalSharedWorker) {
-			window.SharedWorker = function (url, options) {
-				return new OriginalSharedWorker(fixURL(String(url)), options);
-			};
+			window.SharedWorker =
+				function (url, options) {
 
-			window.SharedWorker.prototype = OriginalSharedWorker.prototype;
+					return new OriginalSharedWorker(
+						fixURL(String(url)),
+						options
+					);
+				};
+
+			window.SharedWorker.prototype =
+				OriginalSharedWorker.prototype;
 		}
 
-		// Intercept fetch()
-		const originalFetch = window.fetch;
 
-		window.fetch = function (resource, options) {
-			if (typeof resource === "string") {
-				resource = fixURL(resource);
-			}
-			else if (resource instanceof Request) {
-				const fixed = fixURL(resource.url);
+		/* ==============================================
+		   FETCH INTERCEPTOR
+		============================================== */
 
-				if (fixed !== resource.url) {
-					resource = new Request(fixed, resource);
+		const originalFetch =
+			window.fetch;
+
+		window.fetch =
+			function (resource, options) {
+
+				if (typeof resource === "string") {
+					resource =
+						fixURL(resource);
 				}
-			}
+				else if (
+					typeof Request !== "undefined" &&
+					resource instanceof Request
+				) {
+					const fixed =
+						fixURL(resource.url);
 
-			return originalFetch.call(this, resource, options);
-		};
+					if (fixed !== resource.url) {
+						resource =
+							new Request(
+								fixed,
+								resource
+							);
+					}
+				}
+
+				return originalFetch.call(
+					this,
+					resource,
+					options
+				);
+			};
+
+
+		console.log(
+			"[Swingo URL Fix] Redirect stub installed"
+		);
 	})();
 	</script>
 
@@ -109,9 +365,13 @@
 
 	<noscript>
 		<div id="notSupportedWrap">
-			<h2 id="notSupportedTitle">This content requires JavaScript</h2>
+			<h2 id="notSupportedTitle">
+				This content requires JavaScript
+			</h2>
+
 			<p class="notSupportedMessage">
-				JavaScript appears to be disabled. Please enable it to view this content.
+				JavaScript appears to be disabled.
+				Please enable it to view this content.
 			</p>
 		</div>
 	</noscript>
