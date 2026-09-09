@@ -7,110 +7,12 @@
 
 	<base href="https://cdn.jsdelivr.net/gh/nawsif/host@main/swingo/">
 
-	<script>
-(() => {
-	const CDN_BASE =
-		"https://cdn.jsdelivr.net/gh/tinklehost/hosting@main/swingo/";
-
-	const OriginalWorker = window.Worker;
-
-	window.Worker = function(url, options = {}) {
-		const originalURL = String(url);
-
-		/*
-			Fix Construct's dispatchworker.js.
-
-			We CANNOT do:
-
-			new Worker("https://cdn.jsdelivr.net/...")
-
-			because Worker() requires its initial script to be
-			same-origin.
-
-			Instead create a local blob worker which imports
-			the CDN worker.
-		*/
-		if (
-			originalURL.includes("/scripts/dispatchworker.js") ||
-			originalURL.endsWith("scripts/dispatchworker.js")
-		) {
-			const realURL =
-				CDN_BASE + "scripts/dispatchworker.js";
-
-			console.log(
-				"[Swingo Worker Fix]",
-				originalURL,
-				"->",
-				realURL
-			);
-
-			let wrapperCode;
-
-			if (options && options.type === "module") {
-
-				// Module Worker
-				wrapperCode =
-					`import "${realURL}";`;
-
-			} else {
-
-				// Classic Worker
-				wrapperCode =
-					`importScripts("${realURL}");`;
-			}
-
-			const blob = new Blob(
-				[wrapperCode],
-				{
-					type: "application/javascript"
-				}
-			);
-
-			const blobURL =
-				URL.createObjectURL(blob);
-
-			const worker =
-				new OriginalWorker(
-					blobURL,
-					options
-				);
-
-			/*
-				Don't revoke instantly because the browser
-				still needs the blob during worker startup.
-			*/
-			setTimeout(() => {
-				URL.revokeObjectURL(blobURL);
-			}, 10000);
-
-			return worker;
-		}
-
-		return new OriginalWorker(
-			url,
-			options
-		);
-	};
-
-	window.Worker.prototype =
-		OriginalWorker.prototype;
-
-	console.log(
-		"[Swingo Worker Fix] Worker interceptor installed"
-	);
-})();
-</script>
-
 	<script src="https://tinklehost.github.io/intro.js"></script>
 
-	<meta name="robots" content="noindex,nofollow" />
+	<meta name="robots" content="noindex,nofollow">
 
 	<meta name="viewport"
-		content="width=device-width,
-		initial-scale=1.0,
-		maximum-scale=1.0,
-		minimum-scale=1.0,
-		user-scalable=no">
+		content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
 
 	<meta name="generator" content="Scirra Construct">
 
@@ -124,10 +26,7 @@
 
 	<script>
 		if (location.protocol.substr(0, 4) === "file") {
-			alert(
-				"Web exports won't work until you upload them. " +
-				"(When running on the file: protocol, browsers block many features from working for security reasons.)"
-			);
+			alert("Web exports won't work until you upload them. (When running on the file: protocol, browsers block many features from working for security reasons.)");
 		}
 	</script>
 
@@ -135,13 +34,9 @@
 
 	<noscript>
 		<div id="notSupportedWrap">
-			<h2 id="notSupportedTitle">
-				This content requires JavaScript
-			</h2>
-
+			<h2 id="notSupportedTitle">This content requires JavaScript</h2>
 			<p class="notSupportedMessage">
-				JavaScript appears to be disabled.
-				Please enable it to view this content.
+				JavaScript appears to be disabled. Please enable it to view this content.
 			</p>
 		</div>
 	</noscript>
