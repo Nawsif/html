@@ -119,6 +119,10 @@
 
 </head>
 <body>
+	<div id="language-tip" style="position:fixed;bottom:24px;left:0;right:0;padding:0 20px;color:white;font:18px Arial,sans-serif;text-align:center;z-index:9999;">
+  Want to play in English? Choose the middle option on the left,
+  then open the language dropdown and select English.
+</div>
 	<canvas id='canvas'>
 		HTML5 canvas appears to be unsupported in the current browser.<br />
 		Please try updating or use a different browser.
@@ -254,7 +258,8 @@
 				theme/custom=""
 				`));
                 await engine.start({args: ['--main-pack', 'index.pck', '--language', 'en']});
-                setStatusMode('hidden');
+                document.getElementById('language-tip')?.remove();
+				setStatusMode('hidden');
                 initializing = false;
             }
             startSplitGame().catch(displayFailureNotice);
