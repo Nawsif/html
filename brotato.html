@@ -246,6 +246,13 @@
                 setStatusMode('indeterminate');
                 await engine.init('index');
                 engine.copyToFS('index.pck', pack);
+				engine.copyToFS('override.cfg', new TextEncoder().encode(`
+				[locale]
+				test="en"
+				
+				[gui]
+				theme/custom=""
+				`));
                 await engine.start({args: ['--main-pack', 'index.pck', '--language', 'en']});
                 setStatusMode('hidden');
                 initializing = false;
