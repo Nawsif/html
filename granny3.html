@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+    <base href="https://cdn.jsdelivr.net/gh/mynamescrax/gamesforaetheris@main/granny3/">
+    <meta charset="utf-8">
+<script src="https://tinklehost.github.io/intro.js"></script>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Granny 3</title>
+    <style>
+        body { overflow: hidden !important; margin: 0; padding: 0; }
+        #unity-footer, #unity-warning { display:none !important; }
+        #unity-container, #unity-canvas { width: 100% !important; height: 100% !important; position: absolute; top: 0; left: 0; }
+        #unity-container { margin: 0; padding: 0; }
+    </style>
+</head>
+
+<body>
+    <div id="unity-container" class="unity-desktop">
+        <canvas id="unity-canvas" width=960 height=600 tabindex="-1"></canvas>
+        <div id="unity-loading-bar">
+            <div id="unity-logo"></div>
+            <div id="unity-progress-bar-empty">
+                <div id="unity-progress-bar-full"></div>
+            </div>
+        </div>
+        <div id="unity-warning"> </div>
+        <div id="unity-footer">
+            <div id="unity-logo-title-footer"></div>
+            <div id="unity-fullscreen-button"></div>
+            <div id="unity-build-title">Trees Hate You</div>
+        </div>
+    </div>
+        <script>
+        window.fileMergerConfig = {
+            files: [
+                { name: 'FinalBuild.data', parts: 30 },
+               { name: 'FinalBuild.wasm', parts: 2 },
+            ],
+            basePath: 'Build/',
+            debug: true
+        };
+    </script>
+    <script>(function () {
+  "use strict";
+
+  const defaultConfig = {
+    files: [],
+    basePath: "",
+    debug: true,
+  };
+
+  const config = Object.assign(
+    {},
+    defaultConfig,
+    window.fileMergerConfig || {},
+  );
+  window.mergedFiles = window.mergedFiles || {};
+
+  const mergeStatus = {};
+  const mergeProgress = {};
+
+  let loadingDiv;
+  let loadingContent;
+  let updateScheduled = false;
+  
+  // Cache for faster URL matching
+  const fileMap = new Map();
+  const urlCache = new Map();
+  const downloadCache = new Map();
+  
+  // Concurrency settings
+  const DOWNLOAD_CONCURRENCY = 6;
+  const POLL_START_INTERVAL = 10;
+  const MAX_POLL_INTERVAL = 100;
+  const MAX_WAIT_TIME = 60000;
+
+  function initializeUI() {
+    loadingDiv = document.createElement("div");
+    loadingDiv.id = "file-merger-loading";
+    loadingDiv.style.cssText = `
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.9);
+      color: white;
+      padding: 30px 40px;
+      border-radius: 10px;
+      font-family: monospace;
+      font-size: 16px;
+      z-index: 10000;
+      min-width: 300px;
+      text-align: center;
+      pointer-events: none;
+    `;
+
+    loadingContent = document.createElement("div");
+    loadingContent.id = "file-merger-content";
+    loadingDiv.appendChild(loadingContent);
+    document.body.appendChild(loadingDiv);
+  }
+
+  function updateLoadingDisplay() {
+    if (updateScheduled) return;
+    
+    updateScheduled = true;
+    requestAnimationFrame(() => {
+      if (!loadingContent) {
+        updateScheduled = false;
+        return;
+      }
+
+      const lines = [
+        '<div style="font-size: 18px; margin-bottom: 15px;">loading...</div>'
+      ];
+
+      config.files.forEach((file) => {
+        const status = mergeStatus[file.name] || "waiting";
+        const progress = mergeProgress[file.name] || {
+          current: 0,
+          total: file.parts,
+        };
+
+        let statusText = "";
+        let color = "#888";
+
+        if (status === "merging") {
+          const percent = ((progress.current / progress.total) * 100).toFixed(0);
+          statusText = ` merging... ${progress.current}/${progress.total} (${percent}%)`;
+          color = "#ffa500";
+        } else if (status === "ready") {
+          statusText = "✓ done";
+          color = "#00ff00";
+        } else if (status === "failed") {
+          statusText = "✗ failed";
+          color = "#ff0000";
+        } else {
+          statusText = "○ waiting...";
+        }
+
+        lines.push(
+          `<div style="margin: 6px 0; color: ${color}; font-size: 14px;">${file.name}: ${statusText}</div>`,
+        );
+      });
+      
+      loadingContent.innerHTML = lines.join("");
+
+      const allDone = config.files.every(
+        (file) =>
+          mergeStatus[file.name] === "ready" ||
+          mergeStatus[file.name] === "failed",
+      );
+
+      if (allDone) {
+        setTimeout(() => {
+          if (loadingDiv) {
+            loadingDiv.style.opacity = "0";
+            loadingDiv.style.transition = "opacity 0.5s";
+            setTimeout(() => {
+              if (loadingDiv && loadingDiv.remove) loadingDiv.remove();
+            }, 500);
+          }
+        }, 1000);
+      }
+      
+      updateScheduled = false;
+    });
+  }
+
+  function log(...args) {
+    if (config.debug) console.log("[FileMerger]", ...args);
+  }
+
+  function error(...args) {
+    console.error("[FileMerger]", ...args);
+  }
+
+  function normalizeUrl(url) {
+    try {
+      const cleanUrl = decodeURIComponent(url.toString().split("?")[0]);
+      return cleanUrl;
+    } catch (e) {
+      return url;
+    }
+  }
+
+  function urlsMatch(url1, url2) {
+    const norm1 = normalizeUrl(url1);
+    const norm2 = normalizeUrl(url2);
+
+    if (norm1 === norm2) return true;
+    if (norm1.endsWith(norm2) || norm2.endsWith(norm1)) return true;
+
+    return norm1.split("/").pop() === norm2.split("/").pop();
+  }
+
+  function initializeFileMap() {
+    fileMap.clear();
+    for (const file of config.files) {
+      const fileName = file.name;
+      const fullPath = config.basePath ? `${config.basePath}${fileName}` : fileName;
+      
+      // Cache all possible URL variants
+      const variants = [
+        fileName,
+        fullPath,
+        fileName + ".br",
+        fullPath + ".br"
+      ];
+      
+      for (const variant of variants) {
+        const normalized = normalizeUrl(variant);
+        fileMap.set(normalized, file);
+      }
+    }
+  }
+
+  function shouldInterceptFile(url) {
+    const urlStr = normalizeUrl(url);
+    
+    // Quick check for .part files
+    if (urlStr.includes(".part")) return null;
+    
+    // Use cached lookup
+    const file = fileMap.get(urlStr);
+    return file ? file.name : null;
+  }
+
+  function getMergedFile(filename) {
+    // Check direct match first
+    if (window.mergedFiles[filename]) return window.mergedFiles[filename];
+    
+    // Fallback to URL matching for edge cases
+    for (const [key, value] of Object.entries(window.mergedFiles)) {
+      if (urlsMatch(key, filename)) return value;
+    }
+    
+    return null;
+  }
+
+  async function downloadPart(url, partIndex, fileName) {
+    // Check cache first
+    if (downloadCache.has(url)) {
+      return downloadCache.get(url);
+    }
+    
+    const promise = (async () => {
+      const response = await window.originalFetch(url);
+      if (!response.ok) {
+        if (response.status === 403 || response.status === 404) {
+          throw new Error(`Part missing: ${url}`);
+        }
+        throw new Error(`Failed to load part ${url}: ${response.status}`);
+      }
+      const buffer = await response.arrayBuffer();
+      
+      // Update progress
+      if (mergeProgress[fileName]) {
+        mergeProgress[fileName].current++;
+        updateLoadingDisplay();
+      }
+      
+      return buffer;
+    })();
+    
+    downloadCache.set(url, promise);
+    return promise;
+  }
+
+  async function mergeSplitFiles(filePath, numParts) {
+    const fileName = filePath.split("/").pop();
+    mergeProgress[fileName] = { current: 0, total: numParts };
+    updateLoadingDisplay();
+
+    try {
+      // Pre-generate part URLs
+      const parts = Array.from(
+        { length: numParts }, 
+        (_, i) => `${filePath}.part${i + 1}`
+      );
+      
+      log(`Merging ${filePath} from ${numParts} parts...`);
+
+      const buffers = new Array(numParts);
+      
+      // Download in parallel batches
+      for (let i = 0; i < numParts; i += DOWNLOAD_CONCURRENCY) {
+        const batchEnd = Math.min(i + DOWNLOAD_CONCURRENCY, numParts);
+        const batchPromises = [];
+        
+        for (let j = i; j < batchEnd; j++) {
+          batchPromises.push(
+            downloadPart(parts[j], j, fileName).then(buffer => {
+              buffers[j] = buffer;
+            })
+          );
+        }
+        
+        await Promise.all(batchPromises);
+      }
+
+      // Efficient buffer merging
+      const totalSize = buffers.reduce((sum, buf) => sum + buf.byteLength, 0);
+      const mergedArray = new Uint8Array(totalSize);
+      let offset = 0;
+
+      for (const buffer of buffers) {
+        mergedArray.set(new Uint8Array(buffer), offset);
+        offset += buffer.byteLength;
+      }
+      
+      // Clear download cache for this file to free memory
+      for (let i = 1; i <= numParts; i++) {
+        downloadCache.delete(`${filePath}.part${i}`);
+      }
+
+      log(`✓ ${filePath} done: ${(totalSize / 1024 / 1024).toFixed(2)} MB`);
+      return mergedArray.buffer;
+    } catch (err) {
+      error(`Failed to merge ${filePath}:`, err);
+      throw err;
+    }
+  }
+
+  // Store original fetch
+  if (!window.originalFetch) window.originalFetch = window.fetch;
+
+  // Optimized fetch interceptor with adaptive polling
+  window.fetch = function (url, ...args) {
+    const filename = shouldInterceptFile(url);
+
+    if (filename) {
+      log("Intercepting fetch for:", filename);
+
+      return new Promise((resolve, reject) => {
+        const startTime = Date.now();
+        let pollInterval = POLL_START_INTERVAL;
+        
+        const check = () => {
+          const buffer = getMergedFile(filename);
+
+          if (buffer) {
+            const contentType = filename.endsWith(".wasm")
+              ? "application/wasm"
+              : "application/octet-stream";
+            resolve(
+              new Response(buffer, {
+                status: 200,
+                statusText: "OK",
+                headers: {
+                  "Content-Type": contentType,
+                  "Content-Length": buffer.byteLength.toString(),
+                  "Cache-Control": "no-cache",
+                },
+              }),
+            );
+          } else if (mergeStatus[filename] === "failed") {
+            reject(new Error(`Merge failed for ${filename}`));
+          } else if (Date.now() - startTime > MAX_WAIT_TIME) {
+            reject(new Error(`Timeout waiting for ${filename}`));
+          } else {
+            // Adaptive polling - increase interval gradually
+            pollInterval = Math.min(pollInterval * 1.5, MAX_POLL_INTERVAL);
+            setTimeout(check, pollInterval);
+          }
+        };
+        
+        check();
+      });
+    }
+
+    return window.originalFetch.call(this, url, ...args);
+  };
+
+  // Store original XHR
+  if (!window.OriginalXMLHttpRequest)
+    window.OriginalXMLHttpRequest = window.XMLHttpRequest;
+
+  // Optimized XHR interceptor
+  window.XMLHttpRequest = function (options) {
+    const xhr = new window.OriginalXMLHttpRequest(options);
+    const originalOpen = xhr.open;
+    const originalSend = xhr.send;
+    let requestUrl = "";
+    let pollInterval = POLL_START_INTERVAL;
+
+    xhr.open = function (method, url, ...args) {
+      requestUrl = url;
+      return originalOpen.call(this, method, url, ...args);
+    };
+
+    xhr.send = function (...args) {
+      const filename = shouldInterceptFile(requestUrl);
+
+      if (filename) {
+        log("Intercepting XHR for:", filename);
+
+        const waitForMerge = () => {
+          const buffer = getMergedFile(filename);
+
+          if (buffer) {
+            // Define properties efficiently
+            Object.defineProperties(xhr, {
+              status: { value: 200, configurable: true },
+              statusText: { value: "OK", configurable: true },
+              response: { value: buffer, configurable: true },
+              responseText: { value: null, configurable: true },
+              responseType: { value: "arraybuffer", configurable: true },
+              readyState: { value: 4, configurable: true },
+            });
+            
+            // Trigger events asynchronously
+            queueMicrotask(() => {
+              if (xhr.onreadystatechange) xhr.onreadystatechange();
+              if (xhr.onload) xhr.onload({ type: "load", target: xhr });
+            });
+          } else if (mergeStatus[filename] === "failed") {
+            if (xhr.onerror) xhr.onerror(new Error("Merge Failed"));
+          } else {
+            // Adaptive polling
+            setTimeout(() => {
+              pollInterval = Math.min(pollInterval * 1.5, MAX_POLL_INTERVAL);
+              waitForMerge();
+            }, pollInterval);
+          }
+        };
+
+        waitForMerge();
+        return;
+      }
+
+      return originalSend.call(this, ...args);
+    };
+
+    return xhr;
+  };
+
+  async function autoMergeFiles() {
+    if (!config.files.length) return;
+
+    // Initialize file map for fast lookups
+    initializeFileMap();
+    updateLoadingDisplay();
+
+    try {
+      // Start all merges in parallel
+      const promises = config.files.map((file) => {
+        const fullPath = config.basePath
+          ? `${config.basePath}${file.name}`
+          : file.name;
+
+        mergeStatus[file.name] = "merging";
+        updateLoadingDisplay();
+
+        return mergeSplitFiles(fullPath, file.parts)
+          .then((buffer) => {
+            window.mergedFiles[file.name] = buffer;
+            window.mergedFiles[fullPath] = buffer;
+            mergeStatus[file.name] = "ready";
+            updateLoadingDisplay();
+          })
+          .catch((err) => {
+            mergeStatus[file.name] = "failed";
+            updateLoadingDisplay();
+            error(`Failed to merge ${file.name}:`, err);
+          });
+      });
+
+      await Promise.all(promises);
+      
+      // Clear download cache after all merges complete
+      downloadCache.clear();
+      log("All files merged successfully");
+    } catch (e) {
+      error("Auto-merge failed:", e);
+    }
+  }
+  
+  function init() {
+    if (document.body) {
+      initializeUI();
+      autoMergeFiles();
+    } else {
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", () => {
+          initializeUI();
+          autoMergeFiles();
+        });
+      } else {
+        setTimeout(init, 10);
+      }
+    }
+  }
+
+  init();
+})();</script>
+    <script>
+        var canvas = document.querySelector("#unity-canvas");
+
+        function unityShowBanner(msg, type) {
+            var warningBanner = document.querySelector("#unity-warning");
+
+            function updateBannerVisibility() {
+                warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
+            }
+            var div = document.createElement('div');
+            div.innerHTML = msg;
+            warningBanner.appendChild(div);
+            if (type == 'error') div.style = 'background: red; padding: 10px;';
+            else {
+                if (type == 'warning') div.style = 'background: yellow; padding: 10px;';
+                setTimeout(function() {
+                    warningBanner.removeChild(div);
+                    updateBannerVisibility();
+                }, 5000);
+            }
+            updateBannerVisibility();
+        }
+
+        var buildUrl = "Build";
+        var loaderUrl = buildUrl + "/FinalBuild.loader.js";
+        var config = {
+            arguments: [],
+            dataUrl: buildUrl + "/FinalBuild.data",
+            frameworkUrl: buildUrl + "/FinalBuild.framework.js",
+            codeUrl: buildUrl + "/FinalBuild.wasm",
+            streamingAssetsUrl: "StreamingAssets",
+            companyName: "Dvloper",
+            productName: "Granny 3",
+            productVersion: "0.1.0",
+            showBanner: unityShowBanner,
+        };
+
+        if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+            var meta = document.createElement('meta');
+            meta.name = 'viewport';
+            meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
+            document.getElementsByTagName('head')[0].appendChild(meta);
+            document.querySelector("#unity-container").className = "unity-mobile";
+            canvas.className = "unity-mobile";
+        } else {
+            canvas.style.width = "960px";
+            canvas.style.height = "600px";
+        }
+
+        document.querySelector("#unity-loading-bar").style.display = "block";
+
+        var script = document.createElement("script");
+        script.src = loaderUrl;
+        script.onload = () => {
+            createUnityInstance(canvas, config, (progress) => {
+                document.querySelector("#unity-progress-bar-full").style.width = 100 * progress + "%";
+            }).then((unityInstance) => {
+                document.querySelector("#unity-loading-bar").style.display = "none";
+                document.querySelector("#unity-fullscreen-button").onclick = () => {
+                    unityInstance.SetFullscreen(1);
+                };
+
+            }).catch((message) => {
+                alert(message);
+            });
+        };
+
+        document.body.appendChild(script);
+    </script>
+</body>
+
+</html>
