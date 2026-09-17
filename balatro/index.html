@@ -2,14 +2,20 @@
 <html lang="en-us">
 
 <head>
-    <script src="/html/balatro/coi-serviceworker.js"></script>
+  <!-- Required for SharedArrayBuffer on GitHub Pages -->
+  <script src="./coi-serviceworker.js"></script>
+
   <meta charset="utf-8">
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1, shrink-to-fit=no, minimum-scale=1, maximum-scale=1">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, shrink-to-fit=no, minimum-scale=1, maximum-scale=1"
+  >
 
   <title>Balatro - Tinkle</title>
-  <link rel="stylesheet" type="text/css" href="theme/love.css">
+
+  <link rel="stylesheet" type="text/css" href="./theme/love.css">
 
   <style>
     html,
@@ -27,8 +33,8 @@
       inset: 0;
       width: 100vw;
       height: 100vh;
-      background: #000;
       overflow: hidden;
+      background: #000;
     }
 
     #canvas,
@@ -44,13 +50,14 @@
       visibility: hidden;
     }
 
-    /* Tinkle Games intro */
+    /* ================================
+       TINKLE GAMES INTRO
+       ================================ */
+
     #port-intro {
       position: fixed;
       inset: 0;
       z-index: 999999;
-
-      background: #000;
 
       display: flex;
       align-items: center;
@@ -58,14 +65,17 @@
 
       overflow: hidden;
 
+      background: #000;
+
       opacity: 1;
       transition: opacity 0.7s ease;
     }
 
     #port-intro-text {
       text-align: center;
-      color: white;
-      font-family: Arial, sans-serif;
+      color: #fff;
+
+      font-family: Arial, Helvetica, sans-serif;
 
       opacity: 0;
       transform: scale(0.75);
@@ -76,10 +86,10 @@
     #port-intro-text span {
       display: block;
 
+      margin-bottom: 12px;
+
       font-size: 18px;
       letter-spacing: 8px;
-
-      margin-bottom: 12px;
     }
 
     #port-intro-text strong {
@@ -119,7 +129,10 @@
 
 <body>
 
-  <!-- Port intro -->
+  <!-- ================================
+       INTRO
+       ================================ -->
+
   <div id="port-intro">
     <div id="port-intro-text">
       <span>WEB PORT BY</span>
@@ -127,7 +140,11 @@
     </div>
   </div>
 
-  <!-- Game -->
+
+  <!-- ================================
+       GAME
+       ================================ -->
+
   <div id="game-container">
 
     <canvas
@@ -144,19 +161,35 @@
 
   </div>
 
+
   <script type="text/javascript">
 
+    /* ================================
+       CANVAS SIZE
+       ================================ */
+
     function resizeGame() {
-      const canvas = document.getElementById("canvas");
+      var canvas = document.getElementById("canvas");
 
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      canvas.width =
+        window.innerWidth ||
+        document.documentElement.clientWidth ||
+        document.body.clientWidth;
+
+      canvas.height =
+        window.innerHeight ||
+        document.documentElement.clientHeight ||
+        document.body.clientHeight;
     }
-
-    window.addEventListener("resize", resizeGame);
 
     resizeGame();
 
+    window.addEventListener("resize", resizeGame);
+
+
+    /* ================================
+       LOADING CANVAS
+       ================================ */
 
     var loadingContext =
       document.getElementById("loadingCanvas").getContext("2d");
@@ -166,6 +199,7 @@
       var canvas = loadingContext.canvas;
 
       loadingContext.fillStyle = "rgb(142, 195, 227)";
+
       loadingContext.fillRect(
         0,
         0,
@@ -186,34 +220,43 @@
     }
 
 
-    window.onload = function () {
+    /* ================================
+       INPUT
+       ================================ */
+
+    window.addEventListener("load", function () {
       window.focus();
-    };
+    });
 
-
-    window.onclick = function () {
+    window.addEventListener("click", function () {
       window.focus();
-    };
-
+    });
 
     window.addEventListener(
       "keydown",
       function (e) {
-
         if ([32, 37, 38, 39, 40].indexOf(e.keyCode) > -1) {
           e.preventDefault();
         }
-
       },
       false
     );
 
 
+    /* ================================
+       EMSCRIPTEN / LOVE.JS
+       ================================ */
+
     var Module = {
 
-      arguments: ["./game.love"],
+      arguments: [
+        "./game.love"
+      ],
 
-      INITIAL_MEMORY: 536870912,
+      /*
+        1 GiB WASM heap
+      */
+      INITIAL_MEMORY: 1073741824,
 
       printErr: console.error.bind(console),
 
@@ -225,13 +268,11 @@
         canvas.addEventListener(
           "webglcontextlost",
           function (e) {
-
             alert(
               "WebGL context lost. You will need to reload the page."
             );
 
             e.preventDefault();
-
           },
           false
         );
@@ -239,7 +280,6 @@
         return canvas;
 
       })(),
-
 
       setStatus: function (text) {
 
@@ -260,11 +300,9 @@
 
       },
 
-
       totalDependencies: 0,
 
       remainingDependencies: 0,
-
 
       monitorRunDependencies: function (left) {
 
@@ -292,7 +330,11 @@
     Module.setStatus("Downloading...");
 
 
-    window.onerror = function () {
+    /* ================================
+       ERROR HANDLER
+       ================================ */
+
+    window.onerror = function (event) {
 
       Module.setStatus(
         "Exception thrown, see JavaScript console"
@@ -310,36 +352,47 @@
     };
 
 
-    var applicationLoad = function () {
+    /* ================================
+       START LOVE
+       ================================ */
+
+    var applicationLoad = function (e) {
       Love(Module);
     };
 
   </script>
 
 
+  <!-- All of these now load from /html/balatro/ -->
+
   <script
     type="text/javascript"
-    src="game.js">
+    src="./game.js">
   </script>
-
 
   <script
     async
     type="text/javascript"
-    src="love.js"
+    src="./love.js"
     onload="applicationLoad(this)">
   </script>
 
+
+  <!-- ================================
+       INTRO FADE
+       ================================ -->
 
   <script>
     window.addEventListener("load", function () {
 
       setTimeout(function () {
 
-        const intro =
+        var intro =
           document.getElementById("port-intro");
 
-        if (!intro) return;
+        if (!intro) {
+          return;
+        }
 
         intro.style.opacity = "0";
 
