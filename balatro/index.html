@@ -64,31 +64,15 @@
     </canvas>
 
     <canvas
-        id="canvas"
-        oncontextmenu="event.preventDefault()">
-    </canvas>
+    id="canvas"
+    width="800"
+    height="600"
+    oncontextmenu="event.preventDefault()">
+</canvas>
 
 </div>
 
 <script type="text/javascript">
-
-    function resizeGame() {
-        var canvas = document.getElementById("canvas");
-
-        canvas.width =
-            window.innerWidth ||
-            document.documentElement.clientWidth ||
-            document.body.clientWidth;
-
-        canvas.height =
-            window.innerHeight ||
-            document.documentElement.clientHeight ||
-            document.body.clientHeight;
-    }
-
-    resizeGame();
-
-    window.addEventListener("resize", resizeGame);
 
 
     function goFullScreen() {
