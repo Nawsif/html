@@ -2,184 +2,91 @@
 <html lang="en-us">
 
 <head>
-  <!-- Required for SharedArrayBuffer on GitHub Pages -->
-  <script src="./coi-serviceworker.js"></script>
+    <!-- Needed for SharedArrayBuffer on GitHub Pages -->
+    <script src="./coi-serviceworker.js"></script>
 
-  <meta charset="utf-8">
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1, shrink-to-fit=no, minimum-scale=1, maximum-scale=1"
-  >
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1, shrink-to-fit=no, minimum-scale=1, maximum-scale=1"
+    >
 
-  <title>Balatro - Tinkle</title>
+    <title>Balatro</title>
 
-  <link rel="stylesheet" type="text/css" href="./theme/love.css">
+    <link rel="stylesheet" type="text/css" href="./theme/love.css">
 
-  <style>
-    html,
-    body {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: #000;
-    }
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #000;
+        }
 
-    #game-container {
-      position: fixed;
-      inset: 0;
-      width: 100vw;
-      height: 100vh;
-      overflow: hidden;
-      background: #000;
-    }
+        #game-container {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background: #000;
+        }
 
-    #canvas,
-    #loadingCanvas {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      display: block;
-    }
+        #loadingCanvas,
+        #canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
 
-    #canvas {
-      visibility: hidden;
-    }
-
-    /* ================================
-       TINKLE GAMES INTRO
-       ================================ */
-
-    #port-intro {
-      position: fixed;
-      inset: 0;
-      z-index: 999999;
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      overflow: hidden;
-
-      background: #000;
-
-      opacity: 1;
-      transition: opacity 0.7s ease;
-    }
-
-    #port-intro-text {
-      text-align: center;
-      color: #fff;
-
-      font-family: Arial, Helvetica, sans-serif;
-
-      opacity: 0;
-      transform: scale(0.75);
-
-      animation: portIntro 2.6s ease forwards;
-    }
-
-    #port-intro-text span {
-      display: block;
-
-      margin-bottom: 12px;
-
-      font-size: 18px;
-      letter-spacing: 8px;
-    }
-
-    #port-intro-text strong {
-      display: block;
-
-      font-size: clamp(42px, 8vw, 90px);
-      letter-spacing: 4px;
-    }
-
-    @keyframes portIntro {
-      0% {
-        opacity: 0;
-        transform: scale(0.75);
-        filter: blur(10px);
-      }
-
-      25% {
-        opacity: 1;
-        transform: scale(1);
-        filter: blur(0);
-      }
-
-      70% {
-        opacity: 1;
-        transform: scale(1);
-        filter: blur(0);
-      }
-
-      100% {
-        opacity: 0;
-        transform: scale(1.08);
-        filter: blur(6px);
-      }
-    }
-  </style>
+        #canvas {
+            visibility: hidden;
+        }
+    </style>
 </head>
 
 <body>
 
-  <!-- ================================
-       INTRO
-       ================================ -->
-
-  <div id="port-intro">
-    <div id="port-intro-text">
-      <span>WEB PORT BY</span>
-      <strong>TINKLE GAMES</strong>
-    </div>
-  </div>
-
-
-  <!-- ================================
-       GAME
-       ================================ -->
-
-  <div id="game-container">
+<div id="game-container">
 
     <canvas
-      id="loadingCanvas"
-      oncontextmenu="event.preventDefault()"
-      width="800"
-      height="600">
+        id="loadingCanvas"
+        width="800"
+        height="600"
+        oncontextmenu="event.preventDefault()">
     </canvas>
 
     <canvas
-      id="canvas"
-      oncontextmenu="event.preventDefault()">
+        id="canvas"
+        oncontextmenu="event.preventDefault()">
     </canvas>
 
-  </div>
+</div>
 
+<script type="text/javascript">
 
-  <script type="text/javascript">
-
-    /* ================================
-       CANVAS SIZE
-       ================================ */
-
+    /*
+     * Resize the actual LÖVE canvas to match the browser window.
+     */
     function resizeGame() {
-      var canvas = document.getElementById("canvas");
+        var canvas = document.getElementById("canvas");
 
-      canvas.width =
-        window.innerWidth ||
-        document.documentElement.clientWidth ||
-        document.body.clientWidth;
+        canvas.width =
+            window.innerWidth ||
+            document.documentElement.clientWidth ||
+            document.body.clientWidth;
 
-      canvas.height =
-        window.innerHeight ||
-        document.documentElement.clientHeight ||
-        document.body.clientHeight;
+        canvas.height =
+            window.innerHeight ||
+            document.documentElement.clientHeight ||
+            document.body.clientHeight;
     }
 
     resizeGame();
@@ -187,223 +94,242 @@
     window.addEventListener("resize", resizeGame);
 
 
-    /* ================================
-       LOADING CANVAS
-       ================================ */
+    /*
+     * Fullscreen.
+     * Browsers require this to be triggered by a user interaction.
+     */
+    function goFullScreen() {
+        var canvas = document.getElementById("canvas");
 
-    var loadingContext =
-      document.getElementById("loadingCanvas").getContext("2d");
-
-
-    function drawLoadingText(text) {
-      var canvas = loadingContext.canvas;
-
-      loadingContext.fillStyle = "rgb(142, 195, 227)";
-
-      loadingContext.fillRect(
-        0,
-        0,
-        canvas.width,
-        canvas.height
-      );
-
-      loadingContext.font = "2em Arial";
-      loadingContext.textAlign = "center";
-
-      loadingContext.fillStyle = "rgb(11, 86, 117)";
-
-      loadingContext.fillText(
-        text,
-        canvas.width / 2,
-        canvas.height / 2
-      );
+        if (canvas.requestFullscreen) {
+            canvas.requestFullscreen();
+        } else if (canvas.webkitRequestFullscreen) {
+            canvas.webkitRequestFullscreen();
+        } else if (canvas.mozRequestFullScreen) {
+            canvas.mozRequestFullScreen();
+        }
     }
 
 
-    /* ================================
-       INPUT
-       ================================ */
+    /*
+     * Loading screen.
+     */
+    var loadingCanvas =
+        document.getElementById("loadingCanvas");
 
+    var loadingContext =
+        loadingCanvas.getContext("2d");
+
+
+    function drawLoadingText(text) {
+
+        var canvas = loadingContext.canvas;
+
+        loadingContext.fillStyle =
+            "rgb(142, 195, 227)";
+
+        loadingContext.fillRect(
+            0,
+            0,
+            canvas.width,
+            canvas.height
+        );
+
+        loadingContext.font = "2em Arial";
+        loadingContext.textAlign = "center";
+
+        loadingContext.fillStyle =
+            "rgb(11, 86, 117)";
+
+        loadingContext.fillText(
+            text,
+            canvas.width / 2,
+            canvas.height / 2
+        );
+
+        loadingContext.font = "1.2em Arial";
+
+        loadingContext.fillText(
+            "Powered by Emscripten",
+            canvas.width / 2,
+            canvas.height / 4
+        );
+
+        loadingContext.fillText(
+            "Powered by LÖVE",
+            canvas.width / 2,
+            canvas.height / 4 * 3
+        );
+    }
+
+
+    /*
+     * Keep keyboard input focused on the game.
+     */
     window.addEventListener("load", function () {
-      window.focus();
+        window.focus();
     });
 
     window.addEventListener("click", function () {
-      window.focus();
+        window.focus();
     });
 
     window.addEventListener(
-      "keydown",
-      function (e) {
-        if ([32, 37, 38, 39, 40].indexOf(e.keyCode) > -1) {
-          e.preventDefault();
-        }
-      },
-      false
+        "keydown",
+        function (e) {
+
+            if ([32, 37, 38, 39, 40].indexOf(e.keyCode) > -1) {
+                e.preventDefault();
+            }
+
+        },
+        false
     );
 
 
-    /* ================================
-       EMSCRIPTEN / LOVE.JS
-       ================================ */
-
+    /*
+     * love.js / Emscripten configuration.
+     */
     var Module = {
 
-      arguments: [
-        "./game.love"
-      ],
+        arguments: [
+            "./game.love"
+        ],
 
-      /*
-        1 GiB WASM heap
-      */
-      INITIAL_MEMORY: 1073741824,
+        INITIAL_MEMORY: 1073741824,
 
-      printErr: console.error.bind(console),
+        printErr: console.error.bind(console),
 
-      canvas: (function () {
+        canvas: (function () {
 
-        var canvas =
-          document.getElementById("canvas");
+            var canvas =
+                document.getElementById("canvas");
 
-        canvas.addEventListener(
-          "webglcontextlost",
-          function (e) {
-            alert(
-              "WebGL context lost. You will need to reload the page."
+            canvas.addEventListener(
+                "webglcontextlost",
+                function (e) {
+
+                    console.error(
+                        "WebGL context lost."
+                    );
+
+                    alert(
+                        "WebGL context lost. Reload the page to restart the game."
+                    );
+
+                    e.preventDefault();
+                },
+                false
             );
 
-            e.preventDefault();
-          },
-          false
-        );
+            return canvas;
 
-        return canvas;
+        })(),
 
-      })(),
+        setStatus: function (text) {
 
-      setStatus: function (text) {
+            if (text) {
 
-        if (text) {
+                drawLoadingText(text);
 
-          drawLoadingText(text);
+            } else if (
+                Module.remainingDependencies === 0
+            ) {
 
-        } else if (Module.remainingDependencies === 0) {
+                document.getElementById(
+                    "loadingCanvas"
+                ).style.display = "none";
 
-          document.getElementById(
-            "loadingCanvas"
-          ).style.display = "none";
+                document.getElementById(
+                    "canvas"
+                ).style.visibility = "visible";
+            }
+        },
 
-          document.getElementById(
-            "canvas"
-          ).style.visibility = "visible";
+        totalDependencies: 0,
+
+        remainingDependencies: 0,
+
+        monitorRunDependencies: function (left) {
+
+            this.remainingDependencies = left;
+
+            this.totalDependencies =
+                Math.max(
+                    this.totalDependencies,
+                    left
+                );
+
+            Module.setStatus(
+                left
+                    ? "Preparing... (" +
+                      (this.totalDependencies - left) +
+                      "/" +
+                      this.totalDependencies +
+                      ")"
+                    : "All downloads complete."
+            );
         }
-
-      },
-
-      totalDependencies: 0,
-
-      remainingDependencies: 0,
-
-      monitorRunDependencies: function (left) {
-
-        this.remainingDependencies = left;
-
-        this.totalDependencies =
-          Math.max(
-            this.totalDependencies,
-            left
-          );
-
-        Module.setStatus(
-          left
-            ? "Preparing... (" +
-              (this.totalDependencies - left) +
-              "/" +
-              this.totalDependencies +
-              ")"
-            : "All downloads complete."
-        );
-      }
     };
 
 
     Module.setStatus("Downloading...");
 
 
-    /* ================================
-       ERROR HANDLER
-       ================================ */
+    window.onerror = function (
+        message,
+        source,
+        lineno,
+        colno,
+        error
+    ) {
 
-    window.onerror = function (event) {
+        console.error(
+            "GAME ERROR:",
+            message,
+            source,
+            lineno,
+            colno,
+            error
+        );
 
-      Module.setStatus(
-        "Exception thrown, see JavaScript console"
-      );
-
-      Module.setStatus = function (text) {
-
-        if (text) {
-          Module.printErr(
-            "[post-exception status] " + text
-          );
-        }
-
-      };
+        Module.setStatus(
+            "Exception thrown - check console"
+        );
     };
 
 
-    /* ================================
-       START LOVE
-       ================================ */
+    var applicationLoad = function () {
 
-    var applicationLoad = function (e) {
-      Love(Module);
+        console.log("=== BALATRO WEB START ===");
+
+        console.log(
+            "Cross-origin isolated:",
+            window.crossOriginIsolated
+        );
+
+        console.log(
+            "SharedArrayBuffer:",
+            typeof SharedArrayBuffer
+        );
+
+        Love(Module);
     };
 
-  </script>
+</script>
 
 
-  <!-- All of these now load from /html/balatro/ -->
-
-  <script
+<script
     type="text/javascript"
     src="./game.js">
-  </script>
+</script>
 
-  <script
+<script
     async
     type="text/javascript"
     src="./love.js"
-    onload="applicationLoad(this)">
-  </script>
-
-
-  <!-- ================================
-       INTRO FADE
-       ================================ -->
-
-  <script>
-    window.addEventListener("load", function () {
-
-      setTimeout(function () {
-
-        var intro =
-          document.getElementById("port-intro");
-
-        if (!intro) {
-          return;
-        }
-
-        intro.style.opacity = "0";
-
-        setTimeout(function () {
-          intro.remove();
-        }, 700);
-
-      }, 2600);
-
-    });
-  </script>
+    onload="applicationLoad()">
+</script>
 
 </body>
 </html>
