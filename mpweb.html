@@ -3,6 +3,7 @@
 <head>
 	<meta charset="utf-8">
 
+	<!-- Use @main while testing. Pin to a commit after it works. -->
 	<base href="https://cdn.jsdelivr.net/gh/tinklegames/mp-web@main/docs/">
 
 	<meta
@@ -47,14 +48,11 @@
 		#status {
 			position: absolute;
 			inset: 0;
-
 			background: black;
-
 			display: flex;
 			flex-direction: column;
 			justify-content: center;
 			align-items: center;
-
 			z-index: 100;
 		}
 
@@ -83,18 +81,13 @@
 
 		#status-notice {
 			display: none;
-
 			background-color: #5b3943;
 			border: 1px solid #9b3943;
 			border-radius: 0.5rem;
-
 			color: #e0e0e0;
-
 			font-family: Arial, sans-serif;
-
 			margin: 2rem;
 			padding: 1rem;
-
 			white-space: pre-wrap;
 			text-align: center;
 		}
@@ -173,28 +166,40 @@
 
 
 		/*
-			Exact filenames uploaded to GitHub.
-		Chunk sizes do not matter as long as every
-		part is listed in the correct order.
+			Your current split files are:
+
+			index.wasm.part-000 -> 002
+			index.pck.part-000  -> 040
 		*/
 
-		const WASM_PARTS = [
-			"index.wasm.part-00",
-			"index.wasm.part-01",
-			"index.wasm.part-02",
-			"index.wasm.part-03"
-		];
+		function makePartNames(prefix, count) {
+
+			const parts = [];
+
+			for (let i = 0; i < count; i++) {
+
+				parts.push(
+					prefix +
+					String(i).padStart(3, "0")
+				);
+			}
+
+			return parts;
+		}
 
 
-		const PCK_PARTS = [
-			"index.pck.part-00",
-			"index.pck.part-01",
-			"index.pck.part-02",
-			"index.pck.part-03",
-			"index.pck.part-04",
-			"index.pck.part-05",
-			"index.pck.part-06"
-		];
+		const WASM_PARTS =
+			makePartNames(
+				"index.wasm.part-",
+				3
+			);
+
+
+		const PCK_PARTS =
+			makePartNames(
+				"index.pck.part-",
+				41
+			);
 
 
 		const statusOverlay =
@@ -462,13 +467,6 @@
 					================================
 					2. INITIALIZE GODOT
 					================================
-
-					Godot expects to request:
-
-					index.wasm
-
-					We temporarily intercept that request
-					and return our reconstructed bytes.
 				*/
 
 				const engine =
@@ -523,11 +521,6 @@
 
 				} finally {
 
-					/*
-						Restore normal browser fetching
-						after Godot has initialized.
-					*/
-
 					window.fetch =
 						originalFetch;
 				}
@@ -558,11 +551,6 @@
 					"Loading game data..."
 				);
 
-
-				/*
-					Load the reconstructed PCK directly
-					into Godot's virtual filesystem.
-				*/
 
 				await engine.preloadFile(
 					pckBuffer,
