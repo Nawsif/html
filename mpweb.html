@@ -148,6 +148,7 @@
 
 	<script src="index.js"></script>
 
+
 	<script>
 		const GODOT_CONFIG = {
 			args: [],
@@ -172,10 +173,9 @@
 
 
 		/*
-			Use the exact GitHub filenames.
-
-			This avoids having to care whether the files
-			were split into 10 MB, 15 MB, 90 MB, etc.
+			Exact filenames uploaded to GitHub.
+		Chunk sizes do not matter as long as every
+		part is listed in the correct order.
 		*/
 
 		const WASM_PARTS = [
@@ -273,17 +273,25 @@
 				const partName =
 					partNames[i];
 
+
 				setLoadingText(
 					`${label} ${i + 1}/${partNames.length}`
 				);
+
+
+				console.log(
+					`Downloading ${partName}`
+				);
+
 
 				const response =
 					await fetch(
 						partName,
 						{
-							cache: "default"
+							cache: "no-cache"
 						}
 					);
+
 
 				if (!response.ok) {
 
@@ -293,8 +301,10 @@
 					);
 				}
 
+
 				const partBuffer =
 					await response.arrayBuffer();
+
 
 				const partArray =
 					new Uint8Array(partBuffer);
@@ -317,6 +327,7 @@
 					writeOffset
 				);
 
+
 				writeOffset +=
 					partArray.byteLength;
 
@@ -338,7 +349,59 @@
 			}
 
 
+			console.log(
+				`${label} reconstructed successfully:`,
+				writeOffset,
+				"bytes"
+			);
+
+
 			return output.buffer;
+		}
+
+
+		function getRequestURL(resource) {
+
+			if (typeof resource === "string") {
+				return resource;
+			}
+
+			if (resource instanceof URL) {
+				return resource.href;
+			}
+
+			if (resource instanceof Request) {
+				return resource.url;
+			}
+
+			return String(resource);
+		}
+
+
+		function isIndexWasmRequest(resource) {
+
+			const rawURL =
+				getRequestURL(resource);
+
+			try {
+
+				const parsedURL =
+					new URL(
+						rawURL,
+						window.location.href
+					);
+
+				return parsedURL.pathname.endsWith(
+					"/index.wasm"
+				);
+
+			} catch (error) {
+
+				return (
+					rawURL === "index.wasm" ||
+					rawURL.endsWith("/index.wasm")
+				);
+			}
 		}
 
 
@@ -375,7 +438,9 @@
 
 
 				/*
-					1. Rebuild WASM.
+					================================
+					1. DOWNLOAD + REBUILD WASM
+					================================
 				*/
 
 				const wasmBuffer =
@@ -393,24 +458,17 @@
 				);
 
 
-				const wasmBlob =
-					new Blob(
-						[wasmBuffer],
-						{
-							type:
-								"application/wasm"
-						}
-					);
-
-
-				const wasmURL =
-					URL.createObjectURL(
-						wasmBlob
-					);
-
-
 				/*
-					2. Initialize Godot.
+					================================
+					2. INITIALIZE GODOT
+					================================
+
+					Godot expects to request:
+
+					index.wasm
+
+					We temporarily intercept that request
+					and return our reconstructed bytes.
 				*/
 
 				const engine =
@@ -419,18 +477,71 @@
 					);
 
 
-				await engine.init(
-					wasmURL
-				);
+				const originalFetch =
+					window.fetch.bind(window);
 
 
-				URL.revokeObjectURL(
-					wasmURL
+				window.fetch =
+					async function(resource, options) {
+
+						if (
+							isIndexWasmRequest(resource)
+						) {
+
+							console.log(
+								"Serving reconstructed index.wasm"
+							);
+
+
+							return new Response(
+								wasmBuffer.slice(0),
+								{
+									status: 200,
+									statusText: "OK",
+
+									headers: {
+										"Content-Type":
+											"application/wasm"
+									}
+								}
+							);
+						}
+
+
+						return originalFetch(
+							resource,
+							options
+						);
+					};
+
+
+				try {
+
+					await engine.init(
+						"index"
+					);
+
+				} finally {
+
+					/*
+						Restore normal browser fetching
+						after Godot has initialized.
+					*/
+
+					window.fetch =
+						originalFetch;
+				}
+
+
+				console.log(
+					"Godot WASM initialized successfully."
 				);
 
 
 				/*
-					3. Rebuild PCK.
+					================================
+					3. DOWNLOAD + REBUILD PCK
+					================================
 				*/
 
 				const pckBuffer =
@@ -448,14 +559,26 @@
 				);
 
 
+				/*
+					Load the reconstructed PCK directly
+					into Godot's virtual filesystem.
+				*/
+
 				await engine.preloadFile(
 					pckBuffer,
 					"index.pck"
 				);
 
 
+				console.log(
+					"index.pck loaded successfully."
+				);
+
+
 				/*
-					4. Start game.
+					================================
+					4. START MACHINE PARTY
+					================================
 				*/
 
 				setLoadingText(
