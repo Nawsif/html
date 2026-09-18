@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
 	<meta charset="utf-8">
 
@@ -30,7 +29,7 @@
 
 		body {
 			color: white;
-			background: black;
+			background-color: black;
 			overflow: hidden;
 			touch-action: none;
 		}
@@ -46,49 +45,58 @@
 		}
 
 		#status {
-			position: fixed;
+			position: absolute;
 			inset: 0;
 
 			background: black;
 
 			display: flex;
 			flex-direction: column;
-			align-items: center;
 			justify-content: center;
+			align-items: center;
 
-			z-index: 9999;
+			z-index: 100;
 		}
 
-		#loading-text {
+		#status-splash {
+			max-height: 100%;
+			max-width: 100%;
+			margin: auto;
+		}
+
+		#status-splash.show-image--false {
+			display: none;
+		}
+
+		#status-loading-text {
+			color: white;
 			font-family: Arial, sans-serif;
 			font-size: 24px;
-
 			text-align: center;
-
 			margin-bottom: 20px;
 		}
 
 		#status-progress {
-			width: min(600px, 70vw);
-			height: 20px;
+			width: 50%;
+			max-width: 600px;
 		}
 
 		#status-notice {
 			display: none;
 
-			max-width: 700px;
-
-			margin: 20px;
-			padding: 15px;
-
-			background: #5b3943;
-
+			background-color: #5b3943;
 			border: 1px solid #9b3943;
-			border-radius: 8px;
+			border-radius: 0.5rem;
+
+			color: #e0e0e0;
 
 			font-family: Arial, sans-serif;
 
+			margin: 2rem;
+			padding: 1rem;
+
 			white-space: pre-wrap;
+			text-align: center;
 		}
 	</style>
 
@@ -104,7 +112,6 @@
 	>
 </head>
 
-
 <body>
 
 	<canvas id="canvas">
@@ -115,10 +122,16 @@
 		Your browser does not support JavaScript.
 	</noscript>
 
-
 	<div id="status">
 
-		<div id="loading-text">
+		<img
+			id="status-splash"
+			class="show-image--false"
+			src="index.png"
+			alt=""
+		>
+
+		<div id="status-loading-text">
 			Loading Machine Party...
 		</div>
 
@@ -133,37 +146,24 @@
 	</div>
 
 
-	<!--
-	Loaded from:
-
-	https://cdn.jsdelivr.net/gh/tinklegames/mp-web@main/docs/index.js
-	-->
 	<script src="index.js"></script>
-
 
 	<script>
 		const GODOT_CONFIG = {
 			args: [],
-
 			canvasResizePolicy: 2,
-
 			emscriptenPoolSize: 8,
-
 			ensureCrossOriginIsolationHeaders: false,
-
 			executable: "index",
-
 			experimentalVK: false,
 
 			fileSizes: {
-				"index.pck": 635943632,
+				"index.pck": 636530976,
 				"index.wasm": 36157734
 			},
 
 			focusCanvas: true,
-
 			gdextensionLibs: [],
-
 			godotPoolSize: 4
 		};
 
@@ -172,423 +172,180 @@
 
 
 		/*
-			You created the parts with:
+			Use the exact GitHub filenames.
 
-			split -b 15m -d -a 3 index.wasm index.wasm.part-
-
-			split -b 15m -d -a 3 index.pck index.pck.part-
+			This avoids having to care whether the files
+			were split into 10 MB, 15 MB, 90 MB, etc.
 		*/
 
-		const CHUNK_SIZE =
-			15 * 1024 * 1024;
+		const WASM_PARTS = [
+			"index.wasm.part-00",
+			"index.wasm.part-01",
+			"index.wasm.part-02",
+			"index.wasm.part-03"
+		];
 
 
-		const WASM_SIZE =
-			GODOT_CONFIG.fileSizes["index.wasm"];
-
-
-		const PCK_SIZE =
-			GODOT_CONFIG.fileSizes["index.pck"];
-
-
-		const WASM_PART_COUNT =
-			Math.ceil(
-				WASM_SIZE / CHUNK_SIZE
-			);
-
-
-		const PCK_PART_COUNT =
-			Math.ceil(
-				PCK_SIZE / CHUNK_SIZE
-			);
+		const PCK_PARTS = [
+			"index.pck.part-00",
+			"index.pck.part-01",
+			"index.pck.part-02",
+			"index.pck.part-03",
+			"index.pck.part-04",
+			"index.pck.part-05",
+			"index.pck.part-06"
+		];
 
 
 		const statusOverlay =
-			document.getElementById(
-				"status"
-			);
+			document.getElementById("status");
 
+		const statusProgress =
+			document.getElementById("status-progress");
+
+		const statusNotice =
+			document.getElementById("status-notice");
 
 		const loadingText =
-			document.getElementById(
-				"loading-text"
-			);
+			document.getElementById("status-loading-text");
 
 
-		const progress =
-			document.getElementById(
-				"status-progress"
-			);
+		function setLoadingText(text) {
+			loadingText.textContent = text;
+		}
 
 
-		const notice =
-			document.getElementById(
-				"status-notice"
-			);
+		function setProgress(current, total) {
 
-
-		function makePartList(
-			prefix,
-			count
-		) {
-
-			const result = [];
-
-			for (
-				let i = 0;
-				i < count;
-				i++
-			) {
-
-				result.push(
-					prefix +
-					String(i).padStart(
-						3,
-						"0"
-					)
-				);
-
+			if (total <= 0) {
+				statusProgress.removeAttribute("value");
+				statusProgress.removeAttribute("max");
+				return;
 			}
 
-			return result;
-		}
-
-
-		const WASM_PARTS =
-			makePartList(
-				"index.wasm.part-",
-				WASM_PART_COUNT
-			);
-
-
-		const PCK_PARTS =
-			makePartList(
-				"index.pck.part-",
-				PCK_PART_COUNT
-			);
-
-
-		console.log(
-			"WASM parts:",
-			WASM_PARTS
-		);
-
-
-		console.log(
-			"PCK parts:",
-			PCK_PARTS
-		);
-
-
-		function updateText(text) {
-
-			loadingText.textContent =
-				text;
-
-		}
-
-
-		function updateProgress(
-			current,
-			total
-		) {
-
-			progress.max = total;
-			progress.value = current;
-
+			statusProgress.max = total;
+			statusProgress.value = current;
 		}
 
 
 		function showError(error) {
 
-			console.error(
-				"Machine Party loader error:",
-				error
-			);
+			console.error(error);
 
+			loadingText.style.display = "none";
+			statusProgress.style.display = "none";
+			statusNotice.style.display = "block";
 
-			progress.style.display =
-				"none";
+			let message;
 
-
-			loadingText.style.display =
-				"none";
-
-
-			notice.style.display =
-				"block";
-
-
-			if (
-				error instanceof Error
-			) {
-
-				notice.textContent =
-					error.stack ||
-					error.message;
-
+			if (error instanceof Error) {
+				message = error.message;
 			} else {
-
-				notice.textContent =
-					String(error);
-
+				message = String(error);
 			}
+
+			statusNotice.textContent =
+				"Failed to load Machine Party:\n\n" +
+				message;
 		}
 
 
-		/*
-			Download and reconstruct one split file.
-		*/
-		async function rebuildFile(
-			parts,
+		async function downloadSplitFile(
+			partNames,
 			expectedSize,
-			description,
-			progressOffset,
-			progressTotal
+			label,
+			overallStart,
+			overallTotal
 		) {
 
 			const output =
-				new Uint8Array(
-					expectedSize
-				);
+				new Uint8Array(expectedSize);
 
-
-			let offset = 0;
+			let writeOffset = 0;
 
 
 			for (
 				let i = 0;
-				i < parts.length;
+				i < partNames.length;
 				i++
 			) {
 
-				const part =
-					parts[i];
+				const partName =
+					partNames[i];
 
-
-				const partURL =
-					new URL(
-						part,
-						document.baseURI
-					).href;
-
-
-				updateText(
-					`${description} ${i + 1}/${parts.length}`
+				setLoadingText(
+					`${label} ${i + 1}/${partNames.length}`
 				);
-
-
-				console.log(
-					"Downloading:",
-					partURL
-				);
-
 
 				const response =
 					await fetch(
-						partURL,
+						partName,
 						{
 							cache: "default"
 						}
 					);
 
-
-				if (
-					!response.ok
-				) {
+				if (!response.ok) {
 
 					throw new Error(
-						`Failed to load ${part}\n` +
-						`${response.status} ${response.statusText}`
+						`Could not download ${partName} ` +
+						`(${response.status} ${response.statusText})`
 					);
-
 				}
 
-
-				const buffer =
+				const partBuffer =
 					await response.arrayBuffer();
 
-
-				const bytes =
-					new Uint8Array(
-						buffer
-					);
+				const partArray =
+					new Uint8Array(partBuffer);
 
 
 				if (
-					offset +
-					bytes.byteLength >
+					writeOffset +
+					partArray.byteLength >
 					output.byteLength
 				) {
 
 					throw new Error(
-						`${part} is larger than expected.`
+						`${partName} makes ${label} larger than expected.`
 					);
-
 				}
 
 
 				output.set(
-					bytes,
-					offset
+					partArray,
+					writeOffset
 				);
 
+				writeOffset +=
+					partArray.byteLength;
 
-				offset +=
-					bytes.byteLength;
 
-
-				updateProgress(
-					progressOffset +
-					i +
-					1,
-
-					progressTotal
+				setProgress(
+					overallStart + i + 1,
+					overallTotal
 				);
 			}
 
 
-			if (
-				offset !==
-				expectedSize
-			) {
+			if (writeOffset !== expectedSize) {
 
 				throw new Error(
-					`${description} size mismatch.\n\n` +
+					`${label} size mismatch.\n` +
 					`Expected: ${expectedSize} bytes\n` +
-					`Received: ${offset} bytes`
+					`Downloaded: ${writeOffset} bytes`
 				);
-
 			}
-
-
-			console.log(
-				`${description} reconstructed:`,
-				offset,
-				"bytes"
-			);
 
 
 			return output.buffer;
 		}
 
 
-		/*
-			This variable will contain the complete
-			reconstructed WebAssembly file.
-		*/
-		let reconstructedWasm = null;
-
-
-		/*
-			Save the browser's real fetch function before
-			we replace it.
-		*/
-		const realFetch =
-			window.fetch.bind(
-				window
-			);
-
-
-		/*
-			Intercept Godot's request for index.wasm.
-
-			Godot will think it is downloading:
-
-				index.wasm
-
-			but we return the WASM we reconstructed from
-			the split files.
-		*/
-		window.fetch =
-			async function(
-				input,
-				init
-			) {
-
-				let url;
-
-
-				if (
-					typeof input === "string"
-				) {
-
-					url = input;
-
-				} else if (
-					input instanceof URL
-				) {
-
-					url = input.href;
-
-				} else {
-
-					url = input.url;
-
-				}
-
-
-				const resolvedURL =
-					new URL(
-						url,
-						document.baseURI
-					);
-
-
-				/*
-					Catch index.wasm only.
-				*/
-				if (
-					reconstructedWasm !== null &&
-					resolvedURL.pathname.endsWith(
-						"/index.wasm"
-					)
-				) {
-
-					console.log(
-						"Serving reconstructed index.wasm"
-					);
-
-
-					/*
-						Return a fresh copy because some
-						loaders consume the response body.
-					*/
-					return new Response(
-						reconstructedWasm.slice(0),
-
-						{
-							status: 200,
-
-							headers: {
-								"Content-Type":
-									"application/wasm",
-
-								"Content-Length":
-									String(
-										reconstructedWasm.byteLength
-									)
-							}
-						}
-					);
-				}
-
-
-				return realFetch(
-					input,
-					init
-				);
-			};
-
-
-		async function startGame() {
+		async function startMachineParty() {
 
 			try {
 
-				/*
-					Make sure the browser supports the
-					features required by this Godot export.
-				*/
 				const missing =
 					Engine.getMissingFeatures({
 						threads:
@@ -596,15 +353,13 @@
 					});
 
 
-				if (
-					missing.length > 0
-				) {
+				if (missing.length !== 0) {
 
 					throw new Error(
-						"Missing browser features:\n" +
+						"The following browser features " +
+						"required by Godot are missing:\n" +
 						missing.join("\n")
 					);
-
 				}
 
 
@@ -613,49 +368,50 @@
 					PCK_PARTS.length;
 
 
-				updateProgress(
+				setProgress(
 					0,
 					totalParts
 				);
 
 
 				/*
-					===================================
-					1. REBUILD THE WASM
-					===================================
+					1. Rebuild WASM.
 				*/
 
-				reconstructedWasm =
-					await rebuildFile(
+				const wasmBuffer =
+					await downloadSplitFile(
 						WASM_PARTS,
-
-						WASM_SIZE,
-
+						GODOT_CONFIG.fileSizes["index.wasm"],
 						"Downloading engine",
-
 						0,
-
 						totalParts
 					);
 
 
-				console.log(
-					"Complete WASM ready:",
-					reconstructedWasm.byteLength,
-					"bytes"
+				setLoadingText(
+					"Preparing engine..."
 				);
+
+
+				const wasmBlob =
+					new Blob(
+						[wasmBuffer],
+						{
+							type:
+								"application/wasm"
+						}
+					);
+
+
+				const wasmURL =
+					URL.createObjectURL(
+						wasmBlob
+					);
 
 
 				/*
-					===================================
-					2. INITIALIZE GODOT
-					===================================
+					2. Initialize Godot.
 				*/
-
-				updateText(
-					"Initializing Godot..."
-				);
-
 
 				const engine =
 					new Engine(
@@ -663,61 +419,31 @@
 					);
 
 
-				/*
-					IMPORTANT:
-
-					"index" is the BASE PATH.
-
-					Godot will request:
-
-						index.wasm
-
-					Our fetch interceptor catches it.
-				*/
 				await engine.init(
-					"index"
+					wasmURL
 				);
 
 
-				console.log(
-					"Godot engine initialized."
+				URL.revokeObjectURL(
+					wasmURL
 				);
 
 
 				/*
-					===================================
-					3. REBUILD THE PCK
-					===================================
+					3. Rebuild PCK.
 				*/
 
 				const pckBuffer =
-					await rebuildFile(
+					await downloadSplitFile(
 						PCK_PARTS,
-
-						PCK_SIZE,
-
-						"Downloading game",
-
+						GODOT_CONFIG.fileSizes["index.pck"],
+						"Downloading game data",
 						WASM_PARTS.length,
-
 						totalParts
 					);
 
 
-				console.log(
-					"Complete PCK ready:",
-					pckBuffer.byteLength,
-					"bytes"
-				);
-
-
-				/*
-					===================================
-					4. PRELOAD PCK INTO GODOT
-					===================================
-				*/
-
-				updateText(
+				setLoadingText(
 					"Loading game data..."
 				);
 
@@ -728,50 +454,21 @@
 				);
 
 
-				console.log(
-					"PCK preloaded."
-				);
-
-
 				/*
-					We don't need our JS-side reference to
-					the PCK anymore after preloadFile.
+					4. Start game.
 				*/
 
-
-				/*
-					===================================
-					5. START MACHINE PARTY
-					===================================
-				*/
-
-				updateText(
+				setLoadingText(
 					"Starting Machine Party..."
 				);
 
 
 				await engine.start({
-
 					args: [
 						"--main-pack",
 						"index.pck"
 					]
-
 				});
-
-
-				console.log(
-					"Machine Party started."
-				);
-
-
-				/*
-					Engine is initialized, so release our
-					extra JavaScript reference to the WASM.
-				*/
-
-				reconstructedWasm =
-					null;
 
 
 				statusOverlay.remove();
@@ -782,15 +479,12 @@
 				showError(
 					error
 				);
-
 			}
 		}
 
 
-		startGame();
-
+		startMachineParty();
 	</script>
 
 </body>
-
 </html>
