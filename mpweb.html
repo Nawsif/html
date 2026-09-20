@@ -3,7 +3,6 @@
 <head>
 	<meta charset="utf-8">
 
-	<!-- Small Godot export files are loaded through jsDelivr. -->
 	<base href="https://cdn.jsdelivr.net/gh/tinklegames/mp-web@main/docs/">
 
 	<meta
@@ -143,10 +142,6 @@
 
 		const GODOT_THREADS_ENABLED = false;
 
-		/*
-			Big chunks are fetched directly from raw GitHub.
-			This avoids jsDelivr's package/file size restrictions.
-		*/
 		const CHUNK_BASE =
 			"https://raw.githubusercontent.com/tinklegames/mp-web/main/docs/";
 
@@ -351,7 +346,6 @@
 
 				setProgress(0, totalParts);
 
-				/* 1. Download and rebuild WASM. */
 				const wasmBuffer = await downloadSplitFile(
 					WASM_PARTS,
 					GODOT_CONFIG.fileSizes["index.wasm"],
@@ -362,7 +356,6 @@
 
 				setLoadingText("Preparing engine...");
 
-				/* 2. Initialize Godot with reconstructed WASM. */
 				const engine = new Engine(GODOT_CONFIG);
 				const originalFetch = window.fetch.bind(window);
 
@@ -393,7 +386,6 @@
 
 				console.log("Godot WASM initialized successfully.");
 
-				/* 3. Download and rebuild PCK. */
 				const pckBuffer = await downloadSplitFile(
 					PCK_PARTS,
 					GODOT_CONFIG.fileSizes["index.pck"],
@@ -411,7 +403,6 @@
 
 				console.log("index.pck loaded successfully.");
 
-				/* 4. Start Machine Party. */
 				setLoadingText("Starting Machine Party...");
 
 				await engine.start({
