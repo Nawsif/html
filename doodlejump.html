@@ -55,6 +55,23 @@
 </script>
 <input id="highscore" type="text"/>
 <script src="js/phaser.min.js" type="text/javascript"></script>
+<script>
+    // Assets are served from jsDelivr while this game page is hosted on
+    // nawsif.github.io. Phaser 2 needs crossOrigin="anonymous" on its
+    // image loader so WebGL can safely upload those textures.
+    if (window.Phaser && Phaser.Loader) {
+        Object.defineProperty(Phaser.Loader.prototype, 'crossOrigin', {
+            configurable: true,
+            get: function () {
+                return this.__doodleCrossOrigin || 'anonymous';
+            },
+            set: function (value) {
+                this.__doodleCrossOrigin =
+                    (value === false || value == null) ? 'anonymous' : value;
+            }
+        });
+    }
+</script>
 <script src="js/fulltilt.min.js" type="text/javascript"></script>
 <script src="js/build/production.min.js" type="text/javascript"></script>
 <script src="js/NoSleep.min.js" type="text/javascript"></script>
