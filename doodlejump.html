@@ -1,0 +1,78 @@
+<html>
+
+<head>
+    <script src="https://tinklehost.github.io/intro.js"></script>
+    <base href="https://cdn.jsdelivr.net/gh/nawsif/host@main/doodlejump/">
+
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no" name="viewport"/>
+    <title>Doodle Jump</title>
+    <link href="../../images/ico.ico" rel="shortcut icon">
+
+    <style>
+        body {
+            background-color: black;
+            padding: 0px;
+            margin: 0px;
+        }
+
+        #highscore {
+            position: absolute;
+            left: calc(-100px);
+            Top: calc(-100px);
+            width: 5px;
+            display: 'none';
+        }
+    </style>
+    <script src="./api.js" type="text/javascript"></script>
+</head>
+
+<body>
+
+
+<script type="text/javascript">
+    CloudAPI.init({
+        'id': 229,
+        'splash': true
+    });
+    CloudAPI.mute = function () {
+        if (Doodle && !Doodle.game.sound.mute) {
+            Doodle.game.sound.mute = true;
+            return true;
+        }
+
+        return false;
+    };
+
+    CloudAPI.unmute = function () {
+        if (Doodle && Doodle.game.sound.mute) {
+            Doodle.game.sound.mute = false;
+            return true;
+        }
+
+        return false;
+    };
+</script>
+<input id="highscore" type="text"/>
+<script src="js/phaser.min.js" type="text/javascript"></script>
+<script src="js/fulltilt.min.js" type="text/javascript"></script>
+<script src="js/build/production.min.js" type="text/javascript"></script>
+<script src="js/NoSleep.min.js" type="text/javascript"></script>
+<script src="js/main.js"></script>
+
+<script>
+    var noSleep = new NoSleep();
+
+    function enableNoSleep() {
+        noSleep.enable();
+        document.removeEventListener('touchstart', enableNoSleep, false);
+    }
+
+
+    document.addEventListener('touchstart', enableNoSleep, false);
+
+
+</script>
+
+</body>
+</html>
