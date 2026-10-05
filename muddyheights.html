@@ -86,17 +86,20 @@
     };
 
     async function buildWasmBlobUrl() {
-      const parts = [
-        buildUrl + "/Muddy Heights.wasm.001.part1",
-        buildUrl + "/Muddy Heights.wasm.001.part2",
-        buildUrl + "/Muddy Heights.wasm.001.part3",
+      const wasmBase =
+  "https://raw.githubusercontent.com/nawsif/host/main/muddyheights/Build/";
 
-        buildUrl + "/Muddy Heights.wasm.002.part1",
-        buildUrl + "/Muddy Heights.wasm.002.part2",
-        buildUrl + "/Muddy Heights.wasm.002.part3",
+const parts = [
+  wasmBase + "Muddy%20Heights.wasm.001.part1",
+  wasmBase + "Muddy%20Heights.wasm.001.part2",
+  wasmBase + "Muddy%20Heights.wasm.001.part3",
 
-        buildUrl + "/Muddy Heights.wasm.003"
-      ];
+  wasmBase + "Muddy%20Heights.wasm.002.part1",
+  wasmBase + "Muddy%20Heights.wasm.002.part2",
+  wasmBase + "Muddy%20Heights.wasm.002.part3",
+
+  wasmBase + "Muddy%20Heights.wasm.003"
+];
 
       const chunks = [];
 
