@@ -1,274 +1,995 @@
 <!doctype html>
-<html lang="en-us">
-  <head>
-    <script src="https://tinklehost.github.io/intro.js"></script>
-<base href="https://cdn.jsdelivr.net/gh/nawsif/host@main/agesofconflict/">
-    <meta charset="utf-8" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Unity Web Player | Ages of Conflict</title>
-    <link rel="shortcut icon" href="TemplateData/favicon.ico" />
-    <link rel="stylesheet" href="TemplateData/style.css" />
-    <link rel="manifest" href="manifest.webmanifest" />
-    <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
+<html lang="en">
+<head>
+  <meta charset="utf-8">
 
-      body {
-        background: #000;
-        overflow: hidden;
-      }
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+  >
 
-      #custom-loading-screen {
-        position: fixed;
-        inset: 0;
-        background: #000;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        z-index: 9999;
-        font-family: Arial, sans-serif;
-        color: #fff;
-        gap: 8px;
-        transition: opacity 0.6s ease;
-      }
+  <title>Ages of Conflict</title>
 
-      #custom-loading-screen.hidden {
-        opacity: 0;
-        pointer-events: none;
-      }
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-      #loading-label {
-        font-size: 14px;
-        font-weight: normal;
-      }
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+    }
 
-      #loading-mb {
-        font-size: 13px;
-        color: #666;
-        min-height: 1.2em;
-      }
+    body {
+      position: fixed;
+      inset: 0;
+      font-family: Arial, Helvetica, sans-serif;
+    }
 
-      #unity-container {
-        width: 100%;
-        height: 100%;
-      }
+    #unity-container {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: #000;
+    }
 
-      #unity-canvas {
-        display: block;
-      }
+    #unity-canvas {
+      position: absolute;
+      inset: 0;
 
-      #unity-warning {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        z-index: 10000;
-      }
-    </style>
-  </head>
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-PXHK7Q7G3Z"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag() {
-    dataLayer.push(arguments);
-  }
-  gtag("js", new Date());
-  gtag("config", "G-PXHK7Q7G3Z");
-</script>
-  <body>
-    <div id="custom-loading-screen">
-      <div id="loading-label">Loading</div>
-      <div id="loading-mb"></div>
+      display: block;
+
+      width: 100%;
+      height: 100%;
+
+      background: #000;
+
+      outline: none;
+      border: none;
+    }
+
+    /* Loading screen */
+    #custom-loading-screen {
+      position: fixed;
+      inset: 0;
+
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+
+      gap: 8px;
+
+      background: #000;
+      color: #fff;
+
+      z-index: 999999;
+
+      transition:
+        opacity 0.6s ease,
+        visibility 0.6s ease;
+    }
+
+    #custom-loading-screen.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    #loading-label {
+      font-size: 14px;
+      font-weight: 400;
+    }
+
+    #loading-mb {
+      min-height: 18px;
+
+      color: #777;
+
+      font-size: 13px;
+      font-weight: 400;
+    }
+
+    #loading-bar {
+      width: min(280px, 70vw);
+      height: 3px;
+
+      margin-top: 8px;
+
+      overflow: hidden;
+
+      background: #222;
+    }
+
+    #loading-bar-fill {
+      width: 0%;
+      height: 100%;
+
+      background: #fff;
+
+      transition: width 0.15s linear;
+    }
+
+    #loading-error {
+      display: none;
+
+      width: min(600px, 85vw);
+
+      margin-top: 16px;
+
+      color: #ff6b6b;
+
+      font-size: 13px;
+      line-height: 1.5;
+      text-align: center;
+
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    #unity-warning {
+      position: fixed;
+
+      top: 0;
+      left: 0;
+      right: 0;
+
+      z-index: 9999999;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="custom-loading-screen">
+
+    <div id="loading-label">
+      Loading
     </div>
 
-    <div id="unity-container">
-      <canvas
-        id="unity-canvas"
-        width="1280"
-        height="720"
-        tabindex="-1"
-      ></canvas>
-      <div id="unity-warning"></div>
+    <div id="loading-mb">
+      0.00 MB
     </div>
 
-    <script>
-      var container = document.querySelector("#unity-container");
-      var canvas = document.querySelector("#unity-canvas");
-      var warningBanner = document.querySelector("#unity-warning");
-      var loadingScreen = document.querySelector("#custom-loading-screen");
-      var loadingMb = document.querySelector("#loading-mb");
+    <div id="loading-bar">
+      <div id="loading-bar-fill"></div>
+    </div>
 
-      function unityShowBanner(msg, type) {
-        function updateBannerVisibility() {
-          warningBanner.style.display = warningBanner.children.length
-            ? "block"
-            : "none";
+    <div id="loading-error"></div>
+
+  </div>
+
+
+  <div id="unity-container">
+
+    <canvas
+      id="unity-canvas"
+      tabindex="-1"
+    ></canvas>
+
+    <div id="unity-warning"></div>
+
+  </div>
+
+
+  <script>
+    (() => {
+      "use strict";
+
+
+      /* =========================================================
+         ELEMENTS
+         ========================================================= */
+
+      const container =
+        document.getElementById("unity-container");
+
+      const canvas =
+        document.getElementById("unity-canvas");
+
+      const warningBanner =
+        document.getElementById("unity-warning");
+
+      const loadingScreen =
+        document.getElementById("custom-loading-screen");
+
+      const loadingLabel =
+        document.getElementById("loading-label");
+
+      const loadingMb =
+        document.getElementById("loading-mb");
+
+      const loadingBarFill =
+        document.getElementById("loading-bar-fill");
+
+      const loadingError =
+        document.getElementById("loading-error");
+
+
+      /* =========================================================
+         GAME URLS
+         ========================================================= */
+
+      /*
+        HTML:
+        https://nawsif.github.io/html/agesofconflict/
+
+        Actual game files:
+        github.com/nawsif/host/tree/main/agesofconflict
+      */
+
+
+      /*
+        Use jsDelivr for JS files.
+
+        Unity loads the framework as another <script>,
+        so keeping the JS on jsDelivr avoids GitHub Raw's
+        text/plain MIME type causing script problems.
+      */
+
+      const jsBuildUrl =
+        "https://cdn.jsdelivr.net/gh/nawsif/host@main/agesofconflict/Build";
+
+
+      /*
+        Use raw.githubusercontent.com for the split binary
+        data/wasm pieces.
+
+        This prevents the jsDelivr CORS problem you were
+        seeing specifically on the .part files.
+      */
+
+      const rawBuildUrl =
+        "https://raw.githubusercontent.com/nawsif/host/main/agesofconflict/Build";
+
+
+      const rawGameUrl =
+        "https://raw.githubusercontent.com/nawsif/host/main/agesofconflict";
+
+
+      const loaderUrl =
+        jsBuildUrl + "/AgesOfConflict.loader.js";
+
+
+      /* =========================================================
+         FULLSCREEN CANVAS
+         ========================================================= */
+
+      function resizeCanvas() {
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+
+        container.style.width = width + "px";
+        container.style.height = height + "px";
+
+        canvas.style.width = width + "px";
+        canvas.style.height = height + "px";
+      }
+
+
+      resizeCanvas();
+
+
+      window.addEventListener(
+        "resize",
+        resizeCanvas
+      );
+
+
+      window.addEventListener(
+        "orientationchange",
+        () => {
+          setTimeout(
+            resizeCanvas,
+            100
+          );
         }
-        var div = document.createElement("div");
-        div.innerHTML = msg;
+      );
+
+
+      /* =========================================================
+         UNITY WARNING
+         ========================================================= */
+
+      function unityShowBanner(message, type) {
+
+        const div =
+          document.createElement("div");
+
+        div.textContent = message;
+
+        div.style.padding = "10px";
+        div.style.fontFamily = "Arial, sans-serif";
+        div.style.fontSize = "13px";
+
+
+        if (type === "error") {
+
+          div.style.background = "#b00020";
+          div.style.color = "#fff";
+
+        } else if (type === "warning") {
+
+          div.style.background = "#f5c542";
+          div.style.color = "#000";
+
+        } else {
+
+          div.style.background = "#222";
+          div.style.color = "#fff";
+
+        }
+
+
         warningBanner.appendChild(div);
-        if (type == "error") div.style = "background: red; padding: 10px;";
-        else {
-          if (type == "warning")
-            div.style = "background: yellow; padding: 10px;";
-          setTimeout(function () {
-            warningBanner.removeChild(div);
-            updateBannerVisibility();
+
+
+        if (type !== "error") {
+
+          setTimeout(() => {
+            div.remove();
           }, 5000);
+
         }
-        updateBannerVisibility();
       }
 
-      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-        var meta = document.createElement("meta");
-        meta.name = "viewport";
-        meta.content =
-          "width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes";
-        document.getElementsByTagName("head")[0].appendChild(meta);
-      }
+
+      /* =========================================================
+         HELPERS
+         ========================================================= */
 
       function formatMB(bytes) {
-        return (bytes / (1024 * 1024)).toFixed(2) + " MB";
+
+        return (
+          bytes /
+          (1024 * 1024)
+        ).toFixed(2) + " MB";
+
       }
 
-      function fetchParts(baseName, partCount, onProgress) {
-        var parts = [];
-        for (var i = 1; i <= partCount; i++) {
-          parts.push(baseName + ".part" + String(i).padStart(3, "0"));
+
+      function showError(error) {
+
+        console.error(error);
+
+        loadingLabel.textContent =
+          "Failed to load";
+
+        loadingError.style.display =
+          "block";
+
+        loadingError.textContent =
+          error instanceof Error
+            ? error.message
+            : String(error);
+
+      }
+
+
+      /* =========================================================
+         SPLIT FILE DOWNLOADER
+         ========================================================= */
+
+      async function fetchPart(
+        url,
+        partIndex,
+        loaded,
+        totals,
+        onProgress
+      ) {
+
+        console.log(
+          "[Ages of Conflict] Fetching:",
+          url
+        );
+
+
+        const response =
+          await fetch(
+            url,
+            {
+              mode: "cors",
+              cache: "default"
+            }
+          );
+
+
+        if (!response.ok) {
+
+          throw new Error(
+            "Failed to download:\n" +
+            url +
+            "\n\nHTTP " +
+            response.status +
+            " " +
+            response.statusText
+          );
+
         }
 
-        var loaded = new Array(partCount).fill(0);
-        var totals = new Array(partCount).fill(0);
 
-        var fetches = parts.map(function (url, idx) {
-          return fetch(url).then(function (res) {
-            if (!res.ok) throw new Error("Failed to fetch " + url);
-            var contentLength = res.headers.get("content-length");
-            totals[idx] = contentLength ? parseInt(contentLength, 10) : 0;
-            var reader = res.body.getReader();
-            var chunks = [];
-            function read() {
-              return reader.read().then(function (result) {
-                if (result.done) return chunks;
-                chunks.push(result.value);
-                loaded[idx] += result.value.length;
-                var totalLoaded = loaded.reduce(function (a, b) {
-                  return a + b;
-                }, 0);
-                var totalSize = totals.reduce(function (a, b) {
-                  return a + b;
-                }, 0);
-                if (onProgress) onProgress(totalLoaded, totalSize);
-                return read();
-              });
-            }
-            return read();
-          });
-        });
+        const contentLength =
+          response.headers.get(
+            "content-length"
+          );
 
-        return Promise.all(fetches).then(function (allChunks) {
-          var combined = allChunks.map(function (chunks) {
-            var totalLen = chunks.reduce(function (a, c) {
-              return a + c.length;
-            }, 0);
-            var out = new Uint8Array(totalLen);
-            var offset = 0;
-            chunks.forEach(function (c) {
-              out.set(c, offset);
-              offset += c.length;
-            });
-            return out;
-          });
-          var totalLen = combined.reduce(function (a, c) {
-            return a + c.length;
-          }, 0);
-          var merged = new Uint8Array(totalLen);
-          var offset = 0;
-          combined.forEach(function (c) {
-            merged.set(c, offset);
-            offset += c.length;
-          });
-          return merged.buffer;
-        });
+
+        if (contentLength) {
+
+          totals[partIndex] =
+            Number(contentLength);
+
+        }
+
+
+        /*
+          Some browsers/CDNs may not expose a readable
+          stream. Fall back to arrayBuffer when needed.
+        */
+
+        if (
+          !response.body ||
+          !response.body.getReader
+        ) {
+
+          const buffer =
+            await response.arrayBuffer();
+
+          loaded[partIndex] =
+            buffer.byteLength;
+
+
+          if (onProgress) {
+
+            onProgress(
+              loaded.reduce(
+                (a, b) => a + b,
+                0
+              ),
+
+              totals.reduce(
+                (a, b) => a + b,
+                0
+              )
+            );
+
+          }
+
+
+          return new Uint8Array(buffer);
+        }
+
+
+        const reader =
+          response.body.getReader();
+
+
+        const chunks = [];
+
+        let totalLength = 0;
+
+
+        while (true) {
+
+          const result =
+            await reader.read();
+
+
+          if (result.done) {
+            break;
+          }
+
+
+          chunks.push(
+            result.value
+          );
+
+
+          totalLength +=
+            result.value.byteLength;
+
+
+          loaded[partIndex] +=
+            result.value.byteLength;
+
+
+          if (onProgress) {
+
+            onProgress(
+              loaded.reduce(
+                (a, b) => a + b,
+                0
+              ),
+
+              totals.reduce(
+                (a, b) => a + b,
+                0
+              )
+            );
+
+          }
+
+        }
+
+
+        const joined =
+          new Uint8Array(
+            totalLength
+          );
+
+
+        let offset = 0;
+
+
+        for (
+          const chunk
+          of chunks
+        ) {
+
+          joined.set(
+            chunk,
+            offset
+          );
+
+          offset +=
+            chunk.byteLength;
+
+        }
+
+
+        return joined;
       }
 
-      var buildUrl = "Build";
-      var loaderUrl = buildUrl + "/AgesOfConflict.loader.js";
 
-      var wasmLoaded = 0,
-        wasmTotal = 0;
-      var dataLoaded = 0,
-        dataTotal = 0;
+      async function fetchParts(
+        baseName,
+        partCount,
+        onProgress
+      ) {
+
+        const loaded =
+          new Array(
+            partCount
+          ).fill(0);
+
+        const totals =
+          new Array(
+            partCount
+          ).fill(0);
+
+
+        const promises = [];
+
+
+        for (
+          let i = 1;
+          i <= partCount;
+          i++
+        ) {
+
+          const partName =
+            ".part" +
+            String(i).padStart(
+              3,
+              "0"
+            );
+
+
+          const url =
+            baseName +
+            partName;
+
+
+          promises.push(
+            fetchPart(
+              url,
+              i - 1,
+              loaded,
+              totals,
+              onProgress
+            )
+          );
+
+        }
+
+
+        const parts =
+          await Promise.all(
+            promises
+          );
+
+
+        let combinedLength = 0;
+
+
+        for (
+          const part
+          of parts
+        ) {
+
+          combinedLength +=
+            part.byteLength;
+
+        }
+
+
+        const combined =
+          new Uint8Array(
+            combinedLength
+          );
+
+
+        let offset = 0;
+
+
+        for (
+          const part
+          of parts
+        ) {
+
+          combined.set(
+            part,
+            offset
+          );
+
+          offset +=
+            part.byteLength;
+
+        }
+
+
+        return combined.buffer;
+      }
+
+
+      /* =========================================================
+         DOWNLOAD PROGRESS
+         ========================================================= */
+
+      let wasmLoaded = 0;
+      let wasmTotal = 0;
+
+      let dataLoaded = 0;
+      let dataTotal = 0;
+
 
       function updateProgress() {
-        var totalLoaded = wasmLoaded + dataLoaded;
-        loadingMb.textContent = formatMB(totalLoaded);
+
+        const totalLoaded =
+          wasmLoaded +
+          dataLoaded;
+
+        const totalSize =
+          wasmTotal +
+          dataTotal;
+
+
+        loadingMb.textContent =
+          formatMB(
+            totalLoaded
+          );
+
+
+        /*
+          If Content-Length is available, use it.
+
+          Otherwise Unity progress will take over later.
+        */
+
+        if (totalSize > 0) {
+
+          const progress =
+            Math.min(
+              totalLoaded /
+              totalSize,
+              1
+            );
+
+
+          loadingBarFill.style.width =
+            (
+              progress *
+              90
+            ) + "%";
+
+        }
+
       }
 
-      var wasmPromise = fetchParts(
-        buildUrl + "/AgesOfConflict.wasm",
-        4,
-        function (loaded, total) {
-          wasmLoaded = loaded;
-          wasmTotal = total;
-          updateProgress();
-        },
-      );
 
-      var dataPromise = fetchParts(
-        buildUrl + "/AgesOfConflict.data",
-        4,
-        function (loaded, total) {
-          dataLoaded = loaded;
-          dataTotal = total;
-          updateProgress();
-        },
-      );
+      /* =========================================================
+         START DOWNLOADING BINARY PARTS
+         ========================================================= */
 
-      var script = document.createElement("script");
-      script.src = loaderUrl;
-      script.onload = function () {
-        Promise.all([wasmPromise, dataPromise])
-          .then(function (results) {
-            var wasmBuffer = results[0];
-            var dataBuffer = results[1];
+      const wasmPromise =
+        fetchParts(
+          rawBuildUrl +
+          "/AgesOfConflict.wasm",
 
-            var config = {
+          4,
+
+          (loaded, total) => {
+
+            wasmLoaded =
+              loaded;
+
+            wasmTotal =
+              total;
+
+            updateProgress();
+
+          }
+        );
+
+
+      const dataPromise =
+        fetchParts(
+          rawBuildUrl +
+          "/AgesOfConflict.data",
+
+          4,
+
+          (loaded, total) => {
+
+            dataLoaded =
+              loaded;
+
+            dataTotal =
+              total;
+
+            updateProgress();
+
+          }
+        );
+
+
+      /* =========================================================
+         LOAD UNITY LOADER
+         ========================================================= */
+
+      const loaderScript =
+        document.createElement(
+          "script"
+        );
+
+
+      loaderScript.src =
+        loaderUrl;
+
+
+      loaderScript.async =
+        true;
+
+
+      loaderScript.onerror =
+        () => {
+
+          showError(
+            new Error(
+              "Could not load the Unity loader:\n" +
+              loaderUrl
+            )
+          );
+
+        };
+
+
+      loaderScript.onload =
+        async () => {
+
+          try {
+
+            loadingLabel.textContent =
+              "Loading";
+
+
+            /*
+              Wait until all split binary files are
+              downloaded and reconstructed.
+            */
+
+            const [
+              wasmBuffer,
+              dataBuffer
+            ] =
+              await Promise.all([
+                wasmPromise,
+                dataPromise
+              ]);
+
+
+            /*
+              Turn reconstructed binary files into local
+              blob URLs.
+
+              Unity sees them as normal complete files.
+            */
+
+            const wasmBlobUrl =
+              URL.createObjectURL(
+                new Blob(
+                  [wasmBuffer],
+                  {
+                    type:
+                      "application/wasm"
+                  }
+                )
+              );
+
+
+            const dataBlobUrl =
+              URL.createObjectURL(
+                new Blob(
+                  [dataBuffer],
+                  {
+                    type:
+                      "application/octet-stream"
+                  }
+                )
+              );
+
+
+            const config = {
+
               arguments: [],
-              dataUrl: URL.createObjectURL(
-                new Blob([dataBuffer], { type: "application/octet-stream" }),
-              ),
-              frameworkUrl: buildUrl + "/AgesOfConflict.framework.js",
-              codeUrl: URL.createObjectURL(
-                new Blob([wasmBuffer], { type: "application/wasm" }),
-              ),
-              streamingAssetsUrl: "StreamingAssets",
-              companyName: "JoySparkGames",
-              productName: "Ages of Conflict",
-              productVersion: "4.4.0",
-              showBanner: unityShowBanner,
+
+
+              /*
+                Reconstructed .data
+              */
+
+              dataUrl:
+                dataBlobUrl,
+
+
+              /*
+                Framework stays on jsDelivr.
+              */
+
+              frameworkUrl:
+                jsBuildUrl +
+                "/AgesOfConflict.framework.js",
+
+
+              /*
+                Reconstructed .wasm
+              */
+
+              codeUrl:
+                wasmBlobUrl,
+
+
+              /*
+                If Ages of Conflict uses StreamingAssets,
+                load them from the host repo too.
+              */
+
+              streamingAssetsUrl:
+                rawGameUrl +
+                "/StreamingAssets",
+
+
+              companyName:
+                "JoySparkGames",
+
+              productName:
+                "Ages of Conflict",
+
+              productVersion:
+                "4.4.0",
+
+              showBanner:
+                unityShowBanner
+
             };
 
-            createUnityInstance(canvas, config, function (progress) {})
-              .then(function (unityInstance) {
-                loadingScreen.classList.add("hidden");
-                setTimeout(function () {
-                  loadingScreen.style.display = "none";
-                }, 700);
-              })
-              .catch(function (message) {
-                alert(message);
-              });
-          })
-          .catch(function (err) {
-            alert(`failed! ${err.message}`);
-          });
-      };
-      document.body.appendChild(script);
-    </script>
-  </body>
+
+            console.log(
+              "[Ages of Conflict] Starting Unity"
+            );
+
+
+            const unityInstance =
+              await createUnityInstance(
+                canvas,
+                config,
+
+                progress => {
+
+                  /*
+                    Binary downloads account for roughly
+                    the first 90%.
+
+                    Unity initialization fills the last 10%.
+                  */
+
+                  loadingBarFill.style.width =
+                    (
+                      90 +
+                      progress * 10
+                    ) + "%";
+
+                }
+              );
+
+
+            /*
+              Keep a reference in case you want to use
+              SendMessage/SetFullscreen later.
+            */
+
+            window.unityInstance =
+              unityInstance;
+
+
+            loadingBarFill.style.width =
+              "100%";
+
+
+            loadingScreen.classList.add(
+              "hidden"
+            );
+
+
+            setTimeout(
+              () => {
+
+                loadingScreen.style.display =
+                  "none";
+
+              },
+              650
+            );
+
+
+            /*
+              Blob URLs are no longer needed once
+              Unity has initialized.
+            */
+
+            setTimeout(
+              () => {
+
+                URL.revokeObjectURL(
+                  wasmBlobUrl
+                );
+
+                URL.revokeObjectURL(
+                  dataBlobUrl
+                );
+
+              },
+              10000
+            );
+
+
+            resizeCanvas();
+
+
+          } catch (error) {
+
+            showError(
+              error
+            );
+
+          }
+
+        };
+
+
+      document.body.appendChild(
+        loaderScript
+      );
+
+    })();
+  </script>
+
+</body>
 </html>
