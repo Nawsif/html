@@ -2,19 +2,14 @@
 <html lang="en-us">
 
 <head>
-  <script src="https://tinklehost.github.io/intro.js"></script>
-
   <meta charset="utf-8">
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#000">
 
   <title>Unity WebGL Player</title>
 
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
-
-  <meta name="theme-color" content="#000">
+  <script src="https://tinklehost.github.io/intro.js"></script>
 
   <style>
     html {
@@ -22,13 +17,13 @@
       font-family: sans-serif;
     }
 
-    body,
-    html {
+    html,
+    body {
       margin: 0;
       width: 100%;
       height: 100%;
-      overscroll-behavior: none;
       overflow: hidden;
+      overscroll-behavior: none;
     }
 
     #canvas,
@@ -38,40 +33,43 @@
       left: 0;
       width: 100%;
       height: 100%;
-      border: 0 none;
+      border: 0;
     }
 
     #canvas {
-      background: #000;
       display: none;
+      background: #000;
     }
 
-    .visible {
-      visibility: visible;
-      opacity: 1;
-      transition: opacity .1s linear;
+    #overlayDiv {
+      z-index: 1;
     }
 
-    .hidden {
-      visibility: hidden;
-      opacity: 0;
-      transition:
-        visibility 0s .25s,
-        opacity .25s linear;
+    #presplash {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      z-index: 2;
     }
 
-    #statusDiv,
-    #inputDiv {
-      background: rgba(0, 0, 0, 0.75);
-      width: 50%;
-      margin: auto;
-      min-width: 340px;
-      padding: 10px;
+    #statusDiv {
       position: absolute;
       top: 0;
       left: 0;
       right: 0;
+
+      width: 50%;
+      min-width: 340px;
+
+      margin: auto;
+      padding: 10px;
+
+      background: rgba(0, 0, 0, 0.75);
       border-radius: 0 0 5px 5px;
+
       z-index: 3;
     }
 
@@ -80,48 +78,6 @@
       max-height: 40vh;
       color: #ccc;
       font-size: 14px;
-    }
-
-    #statusProgress {
-      display: none;
-      width: 100%;
-    }
-
-    #inputDiv {
-      width: 65%;
-      padding-left: 10px;
-      padding-right: 20px;
-    }
-
-    #inputPrompt {
-      color: #eee;
-      font-size: 150%;
-      margin-bottom: 1em;
-      margin-top: 1em;
-    }
-
-    #inputText {
-      width: 100%;
-      font-size: 175%;
-      padding: 5px;
-      background: inherit;
-      color: #eee;
-    }
-
-    #inputText:focus {
-      color: #fff;
-    }
-
-    #presplash {
-      position: absolute;
-      top: 0;
-      left: 0;
-      display: block;
-      margin: auto;
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      z-index: 1;
     }
 
     .file-row {
@@ -142,6 +98,59 @@
       color: #888;
     }
 
+    #statusProgress {
+      display: none;
+      width: 100%;
+    }
+
+    #inputDiv {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+
+      width: 65%;
+
+      margin: auto;
+      padding: 10px 20px 10px 10px;
+
+      background: rgba(0, 0, 0, 0.75);
+      border-radius: 0 0 5px 5px;
+
+      z-index: 4;
+    }
+
+    #inputPrompt {
+      margin-top: 1em;
+      margin-bottom: 1em;
+      color: #eee;
+      font-size: 150%;
+    }
+
+    #inputText {
+      width: 100%;
+      padding: 5px;
+
+      background: inherit;
+      color: #eee;
+
+      font-size: 175%;
+    }
+
+    .visible {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    .hidden {
+      visibility: hidden;
+      opacity: 0;
+
+      transition:
+        visibility 0s .25s,
+        opacity .25s linear;
+    }
+
     #file-merger-loading {
       display: none !important;
     }
@@ -152,17 +161,16 @@
 
   <canvas
     id="canvas"
-    oncontextmenu="event.preventDefault()"
     tabindex="-1"
+    oncontextmenu="event.preventDefault()"
   ></canvas>
 
   <div id="overlayDiv"></div>
 
-  <!-- This stays on the HTML repo -->
   <img
     id="presplash"
     src="splash.png"
-    alt="presplash background"
+    alt=""
   >
 
   <div id="statusDiv" class="visible">
@@ -173,10 +181,10 @@
         <span class="file-name">build8.data:</span>
 
         <span
-          class="file-status pending"
           id="status-build8-data"
+          class="file-status pending"
         >
-          merging... part0/part6
+          waiting...
         </span>
       </div>
 
@@ -184,10 +192,10 @@
         <span class="file-name">build8.wasm:</span>
 
         <span
-          class="file-status pending"
           id="status-build8-wasm"
+          class="file-status pending"
         >
-          merging... part0/part2
+          waiting...
         </span>
       </div>
 
@@ -195,8 +203,8 @@
         <span class="file-name">engine:</span>
 
         <span
-          class="file-status pending"
           id="status-engine"
+          class="file-status pending"
         >
           waiting...
         </span>
@@ -211,6 +219,7 @@
     ></progress>
 
   </div>
+
 
   <div id="inputDiv" class="hidden">
 
@@ -227,156 +236,54 @@
 
   </div>
 
+
   <script>
     /*
-     * HTML:
-     * https://nawsif.github.io/html/swh/
-     *
-     * Game files:
-     * https://github.com/nawsif/host/tree/main/swh
-     *
-     * Using raw.githubusercontent.com instead of jsDelivr
-     * to avoid the CORS problem you were getting.
+      PAGE:
+      https://nawsif.github.io/html/swh/
+
+      GAME REPO:
+      https://github.com/nawsif/host/tree/main/swh
+    */
+
+    const RAW_BUILD_ROOT =
+      "https://raw.githubusercontent.com/nawsif/host/main/swh/Build/";
+
+    const CDN_BUILD_ROOT =
+      "https://cdn.jsdelivr.net/gh/nawsif/host@main/swh/Build/";
+
+    const STREAMING_ASSETS_ROOT =
+      "https://cdn.jsdelivr.net/gh/nawsif/host@main/swh/StreamingAssets";
+
+
+    const DATA_PARTS = 7;
+    const WASM_PARTS = 3;
+
+
+    /*
+     * Mobile viewport
      */
 
-    const HOST_ROOT =
-      "https://raw.githubusercontent.com/nawsif/host/main/swh/";
-
-    const BUILD_ROOT =
-      HOST_ROOT + "Build/";
-
-    const STREAMING_ROOT =
-      HOST_ROOT + "StreamingAssets";
-
-
     if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-      const meta = document.createElement("meta");
+
+      const meta =
+        document.createElement("meta");
 
       meta.name = "viewport";
 
       meta.content =
         "width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes";
 
-      document
-        .getElementsByTagName("head")[0]
-        .appendChild(meta);
+      document.head.appendChild(meta);
     }
 
 
-    function mergeFiles(fileParts, onProgress) {
-      return new Promise((resolve, reject) => {
-        const buffers = [];
+    /*
+     * Status helper
+     */
 
-        function fetchPart(index) {
+    function setStatus(id, text, done = false) {
 
-          if (index >= fileParts.length) {
-
-            const totalLength =
-              buffers.reduce(
-                (sum, buf) => sum + buf.byteLength,
-                0
-              );
-
-            const combined =
-              new Uint8Array(totalLength);
-
-            let offset = 0;
-
-            for (const buf of buffers) {
-              combined.set(
-                new Uint8Array(buf),
-                offset
-              );
-
-              offset += buf.byteLength;
-            }
-
-            const mergedBlob =
-              new Blob(
-                [combined],
-                {
-                  type: "application/octet-stream"
-                }
-              );
-
-            resolve(mergedBlob);
-            return;
-          }
-
-
-          const partUrl = fileParts[index];
-
-          console.log(
-            `Fetching part ${index + 1}/${fileParts.length}:`,
-            partUrl
-          );
-
-
-          fetch(partUrl, {
-            mode: "cors",
-            cache: "no-store"
-          })
-
-            .then((resp) => {
-
-              if (!resp.ok) {
-                throw new Error(
-                  `Failed to fetch ${partUrl} (${resp.status})`
-                );
-              }
-
-              return resp.arrayBuffer();
-            })
-
-            .then((data) => {
-
-              buffers.push(data);
-
-              if (onProgress) {
-                onProgress(
-                  index + 1,
-                  fileParts.length
-                );
-              }
-
-              fetchPart(index + 1);
-            })
-
-            .catch((err) => {
-              console.error(
-                "Chunk failed:",
-                partUrl,
-                err
-              );
-
-              reject(err);
-            });
-        }
-
-        fetchPart(0);
-      });
-    }
-
-
-    function getParts(file, totalParts) {
-      const parts = [];
-
-      for (
-        let i = 0;
-        i < totalParts;
-        i++
-      ) {
-
-        parts.push(
-          `${BUILD_ROOT}${file}.part${i}`
-        );
-      }
-
-      return parts;
-    }
-
-
-    function setStatus(id, text, done) {
       const el =
         document.getElementById(id);
 
@@ -396,9 +303,128 @@
     }
 
 
-    const dataParts = 7;
-    const wasmParts = 3;
+    /*
+     * Build split file URLs
+     */
 
+    function getParts(fileName, totalParts) {
+
+      const parts = [];
+
+      for (let i = 0; i < totalParts; i++) {
+
+        parts.push(
+          RAW_BUILD_ROOT +
+          fileName +
+          ".part" +
+          i
+        );
+      }
+
+      return parts;
+    }
+
+
+    /*
+     * Download and merge split files
+     */
+
+    async function mergeFiles(fileParts, onProgress) {
+
+      const buffers = [];
+
+      for (
+        let index = 0;
+        index < fileParts.length;
+        index++
+      ) {
+
+        const url =
+          fileParts[index];
+
+        console.log(
+          `[${index + 1}/${fileParts.length}] Fetching`,
+          url
+        );
+
+
+        const response =
+          await fetch(
+            url,
+            {
+              mode: "cors",
+              cache: "no-store"
+            }
+          );
+
+
+        if (!response.ok) {
+
+          throw new Error(
+            `Failed to fetch ${url} - HTTP ${response.status}`
+          );
+        }
+
+
+        const buffer =
+          await response.arrayBuffer();
+
+        buffers.push(buffer);
+
+
+        if (onProgress) {
+
+          onProgress(
+            index + 1,
+            fileParts.length
+          );
+        }
+      }
+
+
+      let totalLength = 0;
+
+      for (const buffer of buffers) {
+
+        totalLength +=
+          buffer.byteLength;
+      }
+
+
+      const merged =
+        new Uint8Array(
+          totalLength
+        );
+
+
+      let offset = 0;
+
+
+      for (const buffer of buffers) {
+
+        merged.set(
+          new Uint8Array(buffer),
+          offset
+        );
+
+        offset +=
+          buffer.byteLength;
+      }
+
+
+      return new Blob(
+        [merged],
+        {
+          type:
+            "application/octet-stream"
+        }
+      );
+    }
+
+
+    /*
+     * Initial status
+     */
 
     setStatus(
       "status-build8-data",
@@ -416,14 +442,20 @@
     );
 
 
+    /*
+     * DATA
+     */
+
     const dataPromise =
       mergeFiles(
+
         getParts(
           "build8.data",
-          dataParts
+          DATA_PARTS
         ),
 
         (done, total) => {
+
           setStatus(
             "status-build8-data",
             `merging... part${done - 1}/part${total - 1}`
@@ -431,7 +463,7 @@
         }
       )
 
-      .then((blob) => {
+      .then(blob => {
 
         setStatus(
           "status-build8-data",
@@ -443,14 +475,20 @@
       });
 
 
+    /*
+     * WASM
+     */
+
     const wasmPromise =
       mergeFiles(
+
         getParts(
           "build8.wasm",
-          wasmParts
+          WASM_PARTS
         ),
 
         (done, total) => {
+
           setStatus(
             "status-build8-wasm",
             `merging... part${done - 1}/part${total - 1}`
@@ -458,7 +496,7 @@
         }
       )
 
-      .then((blob) => {
+      .then(blob => {
 
         setStatus(
           "status-build8-wasm",
@@ -470,186 +508,317 @@
       });
 
 
-    Promise
-      .all([
-        dataPromise,
-        wasmPromise
-      ])
+    /*
+     * Start Unity once both large files are merged
+     */
 
-      .then(
-        ([
-          dataBlob,
-          wasmBlob
-        ]) => {
+    Promise.all([
+      dataPromise,
+      wasmPromise
+    ])
 
-          const dataBlobUrl =
-            URL.createObjectURL(
-              dataBlob
-            );
+    .then(
+      async ([dataBlob, wasmBlob]) => {
 
-          const wasmBlobUrl =
-            URL.createObjectURL(
-              wasmBlob
-            );
+        console.log(
+          "Both split files merged"
+        );
 
 
-          /*
-           * Unity will request:
-           *
-           * Build/build8.data
-           * Build/build8.wasm
-           *
-           * Those requests are replaced with
-           * our locally merged Blob URLs.
-           */
+        const dataBlobUrl =
+          URL.createObjectURL(
+            dataBlob
+          );
 
-          const originalFetch =
-            window.fetch.bind(window);
+        const wasmBlobUrl =
+          URL.createObjectURL(
+            wasmBlob
+          );
 
 
-          window.fetch =
-            async function (
-              resource,
-              options
+        console.log(
+          "DATA blob:",
+          dataBlobUrl
+        );
+
+        console.log(
+          "WASM blob:",
+          wasmBlobUrl
+        );
+
+
+        /*
+         * Intercept fetch requests made by Unity.
+         */
+
+        const originalFetch =
+          window.fetch.bind(window);
+
+
+        window.fetch =
+          async function(resource, options) {
+
+            let url = "";
+
+            if (
+              typeof resource ===
+              "string"
             ) {
 
-              let url =
-                typeof resource === "string"
-                  ? resource
-                  : resource?.url;
+              url = resource;
 
+            } else if (
+              resource &&
+              resource.url
+            ) {
+
+              url =
+                resource.url;
+            }
+
+
+            if (
+              url &&
+              url.includes(
+                "build8.data"
+              )
+            ) {
+
+              console.log(
+                "Unity requested DATA -> using merged blob"
+              );
+
+              return originalFetch(
+                dataBlobUrl,
+                options
+              );
+            }
+
+
+            if (
+              url &&
+              url.includes(
+                "build8.wasm"
+              )
+            ) {
+
+              console.log(
+                "Unity requested WASM -> using merged blob"
+              );
+
+              return originalFetch(
+                wasmBlobUrl,
+                options
+              );
+            }
+
+
+            return originalFetch(
+              resource,
+              options
+            );
+          };
+
+
+        /*
+         * Also intercept XMLHttpRequest,
+         * since some Unity loaders use XHR.
+         */
+
+        const originalOpen =
+          XMLHttpRequest
+            .prototype
+            .open;
+
+
+        XMLHttpRequest.prototype.open =
+          function(
+            method,
+            url,
+            ...rest
+          ) {
+
+            if (
+              typeof url ===
+              "string"
+            ) {
 
               if (
-                typeof url === "string"
+                url.includes(
+                  "build8.data"
+                )
               ) {
 
-                if (
-                  url.includes(
-                    "build8.data"
-                  )
-                ) {
+                console.log(
+                  "XHR DATA -> merged blob"
+                );
 
-                  console.log(
-                    "Redirecting Unity DATA request to merged blob"
-                  );
-
-                  return originalFetch(
-                    dataBlobUrl,
-                    options
-                  );
-                }
-
-
-                if (
-                  url.includes(
-                    "build8.wasm"
-                  )
-                ) {
-
-                  console.log(
-                    "Redirecting Unity WASM request to merged blob"
-                  );
-
-                  return originalFetch(
-                    wasmBlobUrl,
-                    options
-                  );
-                }
+                url =
+                  dataBlobUrl;
               }
 
 
-              return originalFetch(
-                resource,
-                options
-              );
-            };
+              if (
+                url.includes(
+                  "build8.wasm"
+                )
+              ) {
+
+                console.log(
+                  "XHR WASM -> merged blob"
+                );
+
+                url =
+                  wasmBlobUrl;
+              }
+            }
 
 
-          /*
-           * Some Unity versions use XMLHttpRequest
-           * instead of fetch().
-           */
-
-          const originalOpen =
-            XMLHttpRequest
-              .prototype
-              .open;
-
-
-          XMLHttpRequest.prototype.open =
-            function (
+            return originalOpen.call(
+              this,
               method,
               url,
               ...rest
-            ) {
-
-              if (
-                typeof url === "string"
-              ) {
-
-                if (
-                  url.includes(
-                    "build8.data"
-                  )
-                ) {
-
-                  console.log(
-                    "Redirecting XHR DATA request to merged blob"
-                  );
-
-                  url = dataBlobUrl;
-                }
+            );
+          };
 
 
-                if (
-                  url.includes(
-                    "build8.wasm"
-                  )
-                ) {
+        /*
+         * Load Unity loader from jsDelivr.
+         */
 
-                  console.log(
-                    "Redirecting XHR WASM request to merged blob"
-                  );
-
-                  url = wasmBlobUrl;
-                }
-              }
+        const loaderUrl =
+          CDN_BUILD_ROOT +
+          "build8.loader.js";
 
 
-              return originalOpen.call(
-                this,
-                method,
-                url,
-                ...rest
-              );
-            };
+        console.log(
+          "Loading Unity loader:",
+          loaderUrl
+        );
 
 
-          /*
-           * Load the actual Unity loader
-           * from the host repository.
-           */
+        const loaderScript =
+          document.createElement(
+            "script"
+          );
 
-          const loaderScript =
-            document.createElement(
-              "script"
+
+        loaderScript.src =
+          loaderUrl;
+
+
+        loaderScript.onload =
+          function() {
+
+            console.log(
+              "Unity loader loaded"
             );
 
 
-          loaderScript.src =
-            BUILD_ROOT +
-            "build8.loader.js";
+            if (
+              typeof createUnityInstance !==
+              "function"
+            ) {
 
-
-          loaderScript.onload =
-            () => {
-
-              console.log(
-                "Unity loader loaded"
+              throw new Error(
+                "build8.loader.js loaded but createUnityInstance was not found."
               );
+            }
 
 
-              setTimeout(() => {
+            setStatus(
+              "status-engine",
+              "starting..."
+            );
+
+
+            document
+              .getElementById(
+                "canvas"
+              )
+              .style
+              .display =
+                "block";
+
+
+            createUnityInstance(
+
+              document.querySelector(
+                "#canvas"
+              ),
+
+              {
+                /*
+                 * These get intercepted above
+                 * and replaced with our merged blobs.
+                 */
+
+                dataUrl:
+                  "Build/build8.data",
+
+                codeUrl:
+                  "Build/build8.wasm",
+
+
+                /*
+                 * Normal Unity files still come
+                 * directly from jsDelivr.
+                 */
+
+                frameworkUrl:
+                  CDN_BUILD_ROOT +
+                  "build8.framework.js",
+
+                streamingAssetsUrl:
+                  STREAMING_ASSETS_ROOT,
+
+
+                companyName:
+                  "Banzai Project",
+
+                productName:
+                  "Unity WebGL Game",
+
+                productVersion:
+                  "1.9"
+              },
+
+
+              function(progress) {
+
+                const percent =
+                  Math.round(
+                    progress * 100
+                  );
+
+
+                setStatus(
+                  "status-engine",
+                  `booting... ${percent}%`
+                );
+              }
+            )
+
+
+            .then(
+              function(unityInstance) {
+
+                window.unityInstance =
+                  unityInstance;
+
+
+                console.log(
+                  "Unity started successfully"
+                );
+
+
+                setStatus(
+                  "status-engine",
+                  "done ✓",
+                  true
+                );
+
 
                 document
                   .getElementById(
@@ -673,183 +842,142 @@
                   )
                   .className =
                     "hidden";
+              }
+            )
 
 
-                document
-                  .getElementById(
-                    "canvas"
-                  )
-                  .style
-                  .display =
-                    "block";
+            .catch(
+              function(error) {
 
-
-                setStatus(
-                  "status-engine",
-                  "booting..."
+                console.error(
+                  "Unity startup error:",
+                  error
                 );
 
 
-                createUnityInstance(
-                  document.querySelector(
-                    "#canvas"
-                  ),
-
-                  {
-                    /*
-                     * DATA and WASM URLs don't
-                     * actually need to exist.
-                     *
-                     * Our fetch/XHR hooks above
-                     * replace them with the
-                     * merged Blob URLs.
-                     */
-
-                    dataUrl:
-                      "Build/build8.data",
-
-                    codeUrl:
-                      "Build/build8.wasm",
-
-
-                    /*
-                     * Framework loads directly
-                     * from the host repository.
-                     */
-
-                    frameworkUrl:
-                      BUILD_ROOT +
-                      "build8.framework.js",
-
-
-                    streamingAssetsUrl:
-                      STREAMING_ROOT,
-
-
-                    companyName:
-                      "Banzai Project",
-
-                    productName:
-                      "Unity WebGL Game",
-
-                    productVersion:
-                      "1.9"
-                  },
-
-                  (progress) => {
-
-                    setStatus(
-                      "status-engine",
-                      `booting... ${Math.round(
-                        progress * 100
-                      )}%`
-                    );
-                  }
-                )
-
-                .then(
-                  (unityInstance) => {
-
-                    console.log(
-                      "Unity started successfully",
-                      unityInstance
-                    );
-
-
-                    setStatus(
-                      "status-engine",
-                      "done ✓",
-                      true
-                    );
-                  }
-                )
-
-                .catch(
-                  (err) => {
-
-                    console.error(
-                      "Unity failed to start:",
-                      err
-                    );
-
-
-                    document
-                      .getElementById(
-                        "statusTextDiv"
-                      )
-                      .innerHTML =
-                        `
-                        <div style="color:#ff4444">
-                          Unity failed to start.
-                          <br>
-                          <small style="font-size:0.8rem">
-                            ${err.message || err}
-                          </small>
-                        </div>
-                        `;
-                  }
+                showError(
+                  "Unity failed to start.",
+                  error
                 );
-
-              }, 500);
-            };
-
-
-          loaderScript.onerror =
-            (err) => {
-
-              console.error(
-                "Unity loader failed:",
-                err
-              );
+              }
+            );
+          };
 
 
-              document
-                .getElementById(
-                  "statusTextDiv"
-                )
-                .innerHTML =
-                  `
-                  <div style="color:#ff6666">
-                    Failed to load Unity loader script.
-                    <br>
-                    <small>
-                      ${BUILD_ROOT}build8.loader.js
-                    </small>
-                  </div>
-                  `;
-            };
+        loaderScript.onerror =
+          function(error) {
+
+            console.error(
+              "Failed to load loader:",
+              error
+            );
 
 
-          document.body.appendChild(
-            loaderScript
-          );
-        }
-      )
+            showError(
+              "Failed to load Unity loader script.",
+              loaderUrl
+            );
+          };
 
-      .catch((err) => {
+
+        document.body.appendChild(
+          loaderScript
+        );
+      }
+    )
+
+
+    .catch(
+      function(error) {
 
         console.error(
-          "Failed to merge parts:",
-          err
+          "Failed to merge game files:",
+          error
         );
 
 
-        document
-          .getElementById(
-            "statusTextDiv"
-          )
-          .innerHTML =
-            `
-            <div style="color:#ff4444">
-              Error loading game.
-              <br>
+        showError(
+          "Error loading game.",
+          error
+        );
+      }
+    );
 
-              <small style="font-size:0.8rem">
-                ${err.message || err}
-              </small>
-            </div>
-            `;
-      });
+
+    /*
+     * Error UI
+     */
+
+    function showError(title, error) {
+
+      const message =
+        error &&
+        error.message
+          ? error.message
+          : String(error);
+
+
+      document
+        .getElementById(
+          "statusTextDiv"
+        )
+        .innerHTML =
+          `
+          <div style="
+            color:#ff6666;
+            word-break:break-word;
+          ">
+            ${escapeHtml(title)}
+            <br>
+
+            <small style="
+              font-size:0.8rem;
+              color:#ddd;
+            ">
+              ${escapeHtml(message)}
+            </small>
+          </div>
+          `;
+
+
+      document
+        .getElementById(
+          "statusDiv"
+        )
+        .className =
+          "visible";
+    }
+
+
+    function escapeHtml(value) {
+
+      return String(value)
+
+        .replaceAll(
+          "&",
+          "&amp;"
+        )
+
+        .replaceAll(
+          "<",
+          "&lt;"
+        )
+
+        .replaceAll(
+          ">",
+          "&gt;"
+        )
+
+        .replaceAll(
+          '"',
+          "&quot;"
+        )
+
+        .replaceAll(
+          "'",
+          "&#039;"
+        );
+    }
 
   </script>
 
