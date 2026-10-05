@@ -1,124 +1,236 @@
 <!DOCTYPE html>
 <html lang="en-us">
-  <head>
-    <script src="https://tinklehost.github.io/intro.js"></script>
-    <base href="https://cdn.jsdelivr.net/gh/nawsif/host@main/muddyheights/">
-    <meta charset="utf-8">
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Unity WebGL Player | Muddy Heights</title>
-    <link rel="shortcut icon" href="TemplateData/favicon.ico">
-    <link rel="stylesheet" href="TemplateData/style.css">
-  </head>
-  <body>
-    <div id="unity-container" class="unity-desktop">
-      <canvas id="unity-canvas" width=1280 height=720 tabindex="-1"></canvas>
-      <div id="unity-loading-bar">
-        <div id="unity-logo"></div>
-        <div id="unity-progress-bar-empty">
-          <div id="unity-progress-bar-full"></div>
-        </div>
-      </div>
-      <div id="unity-warning"> </div>
-      <div id="unity-footer">
-        <div id="unity-webgl-logo"></div>
-        <div id="unity-fullscreen-button"></div>
-        <div id="unity-build-title">Muddy Heights</div>
+<head>
+  <script src="https://tinklehost.github.io/intro.js"></script>
+  <base href="https://cdn.jsdelivr.net/gh/nawsif/host@main/muddyheights/">
+
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+
+  <title>Unity WebGL Player | Muddy Heights</title>
+
+  <link rel="shortcut icon" href="TemplateData/favicon.ico">
+  <link rel="stylesheet" href="TemplateData/style.css">
+</head>
+
+<body>
+  <div id="unity-container" class="unity-desktop">
+    <canvas id="unity-canvas" width="1280" height="720" tabindex="-1"></canvas>
+
+    <div id="unity-loading-bar">
+      <div id="unity-logo"></div>
+
+      <div id="unity-progress-bar-empty">
+        <div id="unity-progress-bar-full"></div>
       </div>
     </div>
-    <script>
 
-      var container = document.querySelector("#unity-container");
-      var canvas = document.querySelector("#unity-canvas");
-      var loadingBar = document.querySelector("#unity-loading-bar");
-      var progressBarFull = document.querySelector("#unity-progress-bar-full");
-      var fullscreenButton = document.querySelector("#unity-fullscreen-button");
-      var warningBanner = document.querySelector("#unity-warning");
+    <div id="unity-warning"></div>
 
-      // Shows a temporary message banner/ribbon for a few seconds, or
-      // a permanent error message on top of the canvas if type=='error'.
-      // If type=='warning', a yellow highlight color is used.
-      // Modify or remove this function to customize the visually presented
-      // way that non-critical warnings and error messages are presented to the
-      // user.
-      function unityShowBanner(msg, type) {
-        function updateBannerVisibility() {
-          warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
-        }
-        var div = document.createElement('div');
-        div.innerHTML = msg;
-        warningBanner.appendChild(div);
-        if (type == 'error') div.style = 'background: red; padding: 10px;';
-        else {
-          if (type == 'warning') div.style = 'background: yellow; padding: 10px;';
-          setTimeout(function() {
-            warningBanner.removeChild(div);
-            updateBannerVisibility();
-          }, 5000);
-        }
-        updateBannerVisibility();
+    <div id="unity-footer">
+      <div id="unity-webgl-logo"></div>
+      <div id="unity-fullscreen-button"></div>
+      <div id="unity-build-title">Muddy Heights</div>
+    </div>
+  </div>
+
+  <script>
+    const container = document.querySelector("#unity-container");
+    const canvas = document.querySelector("#unity-canvas");
+    const loadingBar = document.querySelector("#unity-loading-bar");
+    const progressBarFull = document.querySelector("#unity-progress-bar-full");
+    const fullscreenButton = document.querySelector("#unity-fullscreen-button");
+    const warningBanner = document.querySelector("#unity-warning");
+
+    function unityShowBanner(msg, type) {
+      function updateBannerVisibility() {
+        warningBanner.style.display =
+          warningBanner.children.length ? "block" : "none";
       }
 
-      var buildUrl = "Build";
-      var loaderUrl = buildUrl + "/Muddy Heights.loader.js";
-      var config = {
-        dataUrl: buildUrl + "/Muddy Heights.data",
-        frameworkUrl: buildUrl + "/Muddy Heights.framework.js",
-        codeUrl: buildUrl + "/Muddy Heights.wasm",
-        streamingAssetsUrl: "StreamingAssets",
-        companyName: "DefaultCompany",
-        productName: "Muddy Heights",
-        productVersion: "",
-        showBanner: unityShowBanner,
-      };
+      const div = document.createElement("div");
+      div.innerHTML = msg;
+      warningBanner.appendChild(div);
 
-      // By default, Unity keeps WebGL canvas render target size matched with
-      // the DOM size of the canvas element (scaled by window.devicePixelRatio)
-      // Set this to false if you want to decouple this synchronization from
-      // happening inside the engine, and you would instead like to size up
-      // the canvas DOM size and WebGL render target sizes yourself.
-      // config.matchWebGLToCanvasSize = false;
-
-      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-        // Mobile device style: fill the whole browser client area with the game canvas:
-
-        var meta = document.createElement('meta');
-        meta.name = 'viewport';
-        meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
-        document.getElementsByTagName('head')[0].appendChild(meta);
-        container.className = "unity-mobile";
-        canvas.className = "unity-mobile";
-
-        // To lower canvas resolution on mobile devices to gain some
-        // performance, uncomment the following line:
-        // config.devicePixelRatio = 1;
-
-
+      if (type === "error") {
+        div.style = "background: red; padding: 10px;";
       } else {
-        // Desktop style: Render the game canvas in a window that can be maximized to fullscreen:
+        if (type === "warning") {
+          div.style = "background: yellow; padding: 10px;";
+        }
 
-        canvas.style.width = "1280px";
-        canvas.style.height = "720px";
+        setTimeout(() => {
+          warningBanner.removeChild(div);
+          updateBannerVisibility();
+        }, 5000);
       }
 
-      loadingBar.style.display = "block";
+      updateBannerVisibility();
+    }
 
-      var script = document.createElement("script");
-      script.src = loaderUrl;
-      script.onload = () => {
-        createUnityInstance(canvas, config, (progress) => {
-          progressBarFull.style.width = 100 * progress + "%";
-              }).then((unityInstance) => {
-                loadingBar.style.display = "none";
-                fullscreenButton.onclick = () => {
-                  unityInstance.SetFullscreen(1);
-                };
-              }).catch((message) => {
-                alert(message);
-              });
-            };
+    const buildUrl = "Build";
+    const loaderUrl = buildUrl + "/Muddy Heights.loader.js";
 
-      document.body.appendChild(script);
+    const config = {
+      dataUrl: buildUrl + "/Muddy Heights.data",
+      frameworkUrl: buildUrl + "/Muddy Heights.framework.js",
 
-    </script>
-  </body>
+      // This gets replaced after the WASM pieces are combined.
+      codeUrl: "",
+
+      streamingAssetsUrl: "StreamingAssets",
+      companyName: "DefaultCompany",
+      productName: "Muddy Heights",
+      productVersion: "",
+      showBanner: unityShowBanner
+    };
+
+    async function buildWasmBlobUrl() {
+      const parts = [
+        buildUrl + "/Muddy Heights.wasm.001.part1",
+        buildUrl + "/Muddy Heights.wasm.001.part2",
+        buildUrl + "/Muddy Heights.wasm.001.part3",
+
+        buildUrl + "/Muddy Heights.wasm.002.part1",
+        buildUrl + "/Muddy Heights.wasm.002.part2",
+        buildUrl + "/Muddy Heights.wasm.002.part3",
+
+        buildUrl + "/Muddy Heights.wasm.003"
+      ];
+
+      const chunks = [];
+
+      console.log("Loading WASM parts...");
+
+      for (let i = 0; i < parts.length; i++) {
+        const url = parts[i];
+
+        console.log(
+          `Loading WASM part ${i + 1}/${parts.length}:`,
+          url
+        );
+
+        const response = await fetch(url);
+
+        if (!response.ok) {
+          throw new Error(
+            `Failed to load ${url}: ${response.status} ${response.statusText}`
+          );
+        }
+
+        const buffer = await response.arrayBuffer();
+
+        console.log(
+          `Loaded ${url}: ${buffer.byteLength.toLocaleString()} bytes`
+        );
+
+        chunks.push(buffer);
+      }
+
+      const totalSize = chunks.reduce(
+        (total, chunk) => total + chunk.byteLength,
+        0
+      );
+
+      console.log(
+        "Combined WASM size:",
+        totalSize.toLocaleString(),
+        "bytes"
+      );
+
+      const wasmBlob = new Blob(chunks, {
+        type: "application/wasm"
+      });
+
+      const blobUrl = URL.createObjectURL(wasmBlob);
+
+      console.log("WASM Blob URL created:", blobUrl);
+
+      return blobUrl;
+    }
+
+    if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+      const meta = document.createElement("meta");
+
+      meta.name = "viewport";
+      meta.content =
+        "width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes";
+
+      document.head.appendChild(meta);
+
+      container.className = "unity-mobile";
+      canvas.className = "unity-mobile";
+
+      // Uncomment if mobile performance is poor:
+      // config.devicePixelRatio = 1;
+    } else {
+      canvas.style.width = "1280px";
+      canvas.style.height = "720px";
+    }
+
+    loadingBar.style.display = "block";
+
+    const script = document.createElement("script");
+    script.src = loaderUrl;
+
+    script.onload = async () => {
+      try {
+        /*
+          Combine:
+            .wasm.001.part1
+            .wasm.001.part2
+            .wasm.001.part3
+            .wasm.002.part1
+            .wasm.002.part2
+            .wasm.002.part3
+            .wasm.003
+
+          into one in-memory WASM file.
+        */
+
+        config.codeUrl = await buildWasmBlobUrl();
+
+        console.log("Starting Unity...");
+        console.log("Data:", config.dataUrl);
+        console.log("Framework:", config.frameworkUrl);
+        console.log("WASM:", config.codeUrl);
+
+        const unityInstance = await createUnityInstance(
+          canvas,
+          config,
+          (progress) => {
+            progressBarFull.style.width =
+              (100 * progress) + "%";
+          }
+        );
+
+        loadingBar.style.display = "none";
+
+        fullscreenButton.onclick = () => {
+          unityInstance.SetFullscreen(1);
+        };
+      } catch (error) {
+        console.error("Unity startup failed:", error);
+
+        loadingBar.style.display = "none";
+
+        unityShowBanner(
+          "Failed to start Muddy Heights: " + error.message,
+          "error"
+        );
+      }
+    };
+
+    script.onerror = () => {
+      loadingBar.style.display = "none";
+
+      unityShowBanner(
+        "Failed to load Unity loader: " + loaderUrl,
+        "error"
+      );
+    };
+
+    document.body.appendChild(script);
+  </script>
+</body>
 </html>
