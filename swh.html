@@ -2,7 +2,7 @@
 <html lang="en-us">
 <head>
   <script src="https://tinklehost.github.io/intro.js"></script>
-<base href="https://cdn.jsdelivr.net/gh/nawsif/host@main/swh">
+<base href="https://cdn.jsdelivr.net/gh/nawsif/host@main/swh/">
   <meta charset="utf-8">
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <title>Unity WebGL Player | SexWithHitler</title>
@@ -222,7 +222,7 @@
     setStatus("status-build8-wasm", "merging... part0/part2");
     setStatus("status-engine", "waiting...");
 
-    const dataPromise = mergeFiles(getParts("swh/Build/build8.data", dataParts), (done, total) => {
+    const dataPromise = mergeFiles(getParts("Build/build8.data", dataParts), (done, total) => {
       setStatus("status-build8-data", `merging... part${done - 1}/part${total - 1}`);
     }).then((blob) => {
       setStatus("status-build8-data", "done ✓", true);
