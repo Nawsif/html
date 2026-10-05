@@ -1,239 +1,849 @@
 <!DOCTYPE html>
 <html lang="en-us">
 <head>
-  <script src="https://tinklehost.github.io/intro.js"></script>
+  <meta charset="utf-8">
+  <meta
+    name="viewport"
+    content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no"
+  >
+
+  <title>Muddy Heights</title>
+
   <base href="https://cdn.jsdelivr.net/gh/nawsif/host@main/muddyheights/">
 
-  <meta charset="utf-8">
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <script src="https://tinklehost.github.io/intro.js"></script>
 
-  <title>Unity WebGL Player | Muddy Heights</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap');
 
-  <link rel="shortcut icon" href="TemplateData/favicon.ico">
-  <link rel="stylesheet" href="TemplateData/style.css">
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: #414141;
+    }
+
+    #unity-container {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+    }
+
+    #unity-canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      outline: none;
+    }
+
+    /* =========================
+       LOADING SCREEN
+       ========================= */
+
+    #unity-loading-bar {
+      position: fixed;
+      inset: 0;
+      z-index: 9000;
+
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+
+      background: #414141;
+
+      opacity: 1;
+      visibility: visible;
+
+      transition:
+        opacity 0.6s ease,
+        visibility 0.6s ease;
+    }
+
+    #unity-loading-bar.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    #loader-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: min(420px, 80vw);
+    }
+
+    #loader-title {
+      font-family: "Orbitron", sans-serif;
+      font-size: clamp(24px, 5vw, 38px);
+      font-weight: 700;
+      letter-spacing: 3px;
+      margin-bottom: 30px;
+
+      background: linear-gradient(
+        90deg,
+        #d3a410,
+        #b7870f,
+        #ffe4a1
+      );
+
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+
+      filter:
+        drop-shadow(0 0 8px rgba(211, 165, 16, 0.4));
+    }
+
+    #loader-icon {
+      width: 120px;
+      height: 120px;
+      margin-bottom: 30px;
+      position: relative;
+    }
+
+    .diamond {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+
+      width: 54px;
+      height: 54px;
+
+      border: 2px solid #d3a410;
+
+      transform:
+        translate(-50%, -50%)
+        rotate(45deg);
+
+      animation: diamondPulse 2s ease-in-out infinite;
+    }
+
+    .diamond:nth-child(2) {
+      width: 72px;
+      height: 72px;
+
+      border-color: rgba(211, 164, 16, 0.55);
+
+      animation-delay: 0.25s;
+    }
+
+    .diamond-core {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+
+      width: 42px;
+      height: 42px;
+
+      transform:
+        translate(-50%, -50%)
+        rotate(45deg);
+
+      background: linear-gradient(
+        135deg,
+        #1e2026,
+        #414750
+      );
+
+      border: 1px solid #d3a410;
+
+      box-shadow:
+        0 0 20px rgba(211, 165, 16, 0.18);
+    }
+
+    @keyframes diamondPulse {
+      0%,
+      100% {
+        transform:
+          translate(-50%, -50%)
+          rotate(45deg)
+          scale(0.9);
+
+        opacity: 0.45;
+      }
+
+      50% {
+        transform:
+          translate(-50%, -50%)
+          rotate(45deg)
+          scale(1.08);
+
+        opacity: 1;
+      }
+    }
+
+    #progress-shell {
+      width: 100%;
+      height: 8px;
+
+      overflow: hidden;
+
+      background: #292d34;
+
+      border: 1px solid rgba(211, 164, 16, 0.45);
+
+      border-radius: 20px;
+
+      box-shadow:
+        0 0 12px rgba(211, 165, 16, 0.12);
+    }
+
+    #unity-progress-bar-full {
+      width: 0%;
+      height: 100%;
+
+      border-radius: inherit;
+
+      background: linear-gradient(
+        90deg,
+        #b7870f,
+        #d3a410,
+        #ffe4a1
+      );
+
+      transition: width 0.12s linear;
+
+      box-shadow:
+        0 0 12px rgba(211, 165, 16, 0.5);
+    }
+
+    #loading-text {
+      margin-top: 12px;
+
+      font-family: "Orbitron", sans-serif;
+      font-size: 11px;
+      letter-spacing: 2px;
+
+      color: #d6d6d6;
+    }
+
+    /* =========================
+       WARNINGS
+       ========================= */
+
+    #unity-warning {
+      position: fixed;
+      left: 50%;
+      top: 15px;
+
+      z-index: 10000;
+
+      width: min(700px, 90vw);
+
+      transform: translateX(-50%);
+
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+
+    /* =========================
+       FULLSCREEN BUTTON
+       ========================= */
+
+    #fullscreen-button {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+
+      z-index: 8000;
+
+      width: 44px;
+      height: 44px;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      border: 1px solid rgba(211, 164, 16, 0.7);
+      border-radius: 8px;
+
+      background: rgba(30, 32, 38, 0.82);
+
+      color: #d3a410;
+
+      cursor: pointer;
+
+      opacity: 0;
+      pointer-events: none;
+
+      transition:
+        opacity 0.25s ease,
+        background 0.2s ease,
+        transform 0.2s ease;
+    }
+
+    #fullscreen-button.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    #fullscreen-button:hover {
+      background: rgba(65, 71, 80, 0.95);
+      transform: scale(1.05);
+    }
+
+    #fullscreen-button svg {
+      width: 22px;
+      height: 22px;
+      fill: currentColor;
+    }
+
+    @media (pointer: coarse) {
+      #fullscreen-button {
+        width: 50px;
+        height: 50px;
+      }
+    }
+  </style>
 </head>
 
 <body>
-  <div id="unity-container" class="unity-desktop">
-    <canvas id="unity-canvas" width="1280" height="720" tabindex="-1"></canvas>
 
-    <div id="unity-loading-bar">
-      <div id="unity-logo"></div>
+  <div id="unity-container">
 
-      <div id="unity-progress-bar-empty">
-        <div id="unity-progress-bar-full"></div>
-      </div>
-    </div>
+    <canvas
+      id="unity-canvas"
+      tabindex="-1"
+    ></canvas>
 
-    <div id="unity-warning"></div>
-
-    <div id="unity-footer">
-      <div id="unity-webgl-logo"></div>
-      <div id="unity-fullscreen-button"></div>
-      <div id="unity-build-title">Muddy Heights</div>
-    </div>
   </div>
 
+  <!-- Custom loader -->
+  <div id="unity-loading-bar">
+
+    <div id="loader-wrapper">
+
+      <div id="loader-title">
+        Tinkle Games
+      </div>
+
+      <div id="loader-icon">
+
+        <div class="diamond"></div>
+        <div class="diamond"></div>
+        <div class="diamond-core"></div>
+
+      </div>
+
+      <div id="progress-shell">
+        <div id="unity-progress-bar-full"></div>
+      </div>
+
+      <div id="loading-text">
+        LOADING 0%
+      </div>
+
+    </div>
+
+  </div>
+
+  <div id="unity-warning"></div>
+
+  <button
+    id="fullscreen-button"
+    title="Fullscreen"
+    aria-label="Fullscreen"
+  >
+    <svg viewBox="0 0 24 24">
+      <path d="
+        M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zm-3-12v2h3v3h2V5h-5z
+      "/>
+    </svg>
+  </button>
+
+
   <script>
-    const container = document.querySelector("#unity-container");
-    const canvas = document.querySelector("#unity-canvas");
-    const loadingBar = document.querySelector("#unity-loading-bar");
-    const progressBarFull = document.querySelector("#unity-progress-bar-full");
-    const fullscreenButton = document.querySelector("#unity-fullscreen-button");
-    const warningBanner = document.querySelector("#unity-warning");
+
+    const canvas =
+      document.querySelector("#unity-canvas");
+
+    const loadingBar =
+      document.querySelector("#unity-loading-bar");
+
+    const progressBar =
+      document.querySelector("#unity-progress-bar-full");
+
+    const loadingText =
+      document.querySelector("#loading-text");
+
+    const warningBanner =
+      document.querySelector("#unity-warning");
+
+    const fullscreenButton =
+      document.querySelector("#fullscreen-button");
+
 
     function unityShowBanner(msg, type) {
-      function updateBannerVisibility() {
-        warningBanner.style.display =
-          warningBanner.children.length ? "block" : "none";
-      }
 
-      const div = document.createElement("div");
-      div.innerHTML = msg;
-      warningBanner.appendChild(div);
+      const div =
+        document.createElement("div");
+
+      div.textContent = msg;
+
+      div.style.padding = "10px";
+      div.style.marginBottom = "5px";
+      div.style.borderRadius = "6px";
 
       if (type === "error") {
-        div.style = "background: red; padding: 10px;";
-      } else {
-        if (type === "warning") {
-          div.style = "background: yellow; padding: 10px;";
-        }
 
-        setTimeout(() => {
-          warningBanner.removeChild(div);
-          updateBannerVisibility();
-        }, 5000);
+        div.style.background = "#b3261e";
+        div.style.color = "#fff";
+
       }
 
-      updateBannerVisibility();
+      else if (type === "warning") {
+
+        div.style.background = "#d3a410";
+        div.style.color = "#1e2026";
+
+      }
+
+      else {
+
+        div.style.background = "#292d34";
+        div.style.color = "#fff";
+
+      }
+
+      warningBanner.appendChild(div);
+
+
+      if (type !== "error") {
+
+        setTimeout(() => {
+
+          div.remove();
+
+        }, 5000);
+
+      }
+
     }
 
+
+
+    /*
+       Normal Unity files still use jsDelivr.
+    */
+
     const buildUrl = "Build";
-    const loaderUrl = buildUrl + "/Muddy Heights.loader.js";
+
+    const loaderUrl =
+      buildUrl + "/Muddy Heights.loader.js";
+
 
     const config = {
-      dataUrl: buildUrl + "/Muddy Heights.data",
-      frameworkUrl: buildUrl + "/Muddy Heights.framework.js",
 
-      // This gets replaced after the WASM pieces are combined.
+      dataUrl:
+        buildUrl + "/Muddy Heights.data",
+
+      frameworkUrl:
+        buildUrl + "/Muddy Heights.framework.js",
+
       codeUrl: "",
 
-      streamingAssetsUrl: "StreamingAssets",
-      companyName: "DefaultCompany",
-      productName: "Muddy Heights",
-      productVersion: "",
-      showBanner: unityShowBanner
+      streamingAssetsUrl:
+        "StreamingAssets",
+
+      companyName:
+        "DefaultCompany",
+
+      productName:
+        "Muddy Heights",
+
+      productVersion:
+        "",
+
+      showBanner:
+        unityShowBanner,
+
+      devicePixelRatio:
+        window.devicePixelRatio || 1
+
     };
 
+
+
+    /*
+       WASM chunks.
+
+       GitHub raw is used because jsDelivr
+       rejects these due to repo/package size.
+    */
+
+    const wasmBase =
+      "https://raw.githubusercontent.com/nawsif/host/main/muddyheights/Build/";
+
+
+    const wasmParts = [
+
+      wasmBase +
+      "Muddy%20Heights.wasm.001.part1",
+
+      wasmBase +
+      "Muddy%20Heights.wasm.001.part2",
+
+      wasmBase +
+      "Muddy%20Heights.wasm.001.part3",
+
+
+      wasmBase +
+      "Muddy%20Heights.wasm.002.part1",
+
+      wasmBase +
+      "Muddy%20Heights.wasm.002.part2",
+
+      wasmBase +
+      "Muddy%20Heights.wasm.002.part3",
+
+
+      wasmBase +
+      "Muddy%20Heights.wasm.003"
+
+    ];
+
+
+
     async function buildWasmBlobUrl() {
-      const wasmBase =
-  "https://raw.githubusercontent.com/nawsif/host/main/muddyheights/Build/";
-
-const parts = [
-  wasmBase + "Muddy%20Heights.wasm.001.part1",
-  wasmBase + "Muddy%20Heights.wasm.001.part2",
-  wasmBase + "Muddy%20Heights.wasm.001.part3",
-
-  wasmBase + "Muddy%20Heights.wasm.002.part1",
-  wasmBase + "Muddy%20Heights.wasm.002.part2",
-  wasmBase + "Muddy%20Heights.wasm.002.part3",
-
-  wasmBase + "Muddy%20Heights.wasm.003"
-];
 
       const chunks = [];
 
-      console.log("Loading WASM parts...");
+      let loadedBytes = 0;
 
-      for (let i = 0; i < parts.length; i++) {
-        const url = parts[i];
+
+
+      /*
+         First download every piece.
+
+         Loader progress from 0-50%
+         is used for the custom WASM download.
+      */
+
+      for (
+        let i = 0;
+        i < wasmParts.length;
+        i++
+      ) {
+
+        const url = wasmParts[i];
 
         console.log(
-          `Loading WASM part ${i + 1}/${parts.length}:`,
+          `Loading WASM ${i + 1}/${wasmParts.length}`,
           url
         );
 
-        const response = await fetch(url);
+
+        const response =
+          await fetch(url);
+
 
         if (!response.ok) {
+
           throw new Error(
-            `Failed to load ${url}: ${response.status} ${response.statusText}`
+            `Failed to load WASM part ${i + 1}: ` +
+            response.status
           );
+
         }
 
-        const buffer = await response.arrayBuffer();
 
-        console.log(
-          `Loaded ${url}: ${buffer.byteLength.toLocaleString()} bytes`
-        );
+        const buffer =
+          await response.arrayBuffer();
+
 
         chunks.push(buffer);
+
+        loadedBytes +=
+          buffer.byteLength;
+
+
+        const partProgress =
+          (i + 1) /
+          wasmParts.length;
+
+
+        const percent =
+          Math.round(
+            partProgress * 50
+          );
+
+
+        progressBar.style.width =
+          percent + "%";
+
+
+        loadingText.textContent =
+          "LOADING " +
+          percent +
+          "%";
+
       }
 
-      const totalSize = chunks.reduce(
-        (total, chunk) => total + chunk.byteLength,
-        0
-      );
+
 
       console.log(
         "Combined WASM size:",
-        totalSize.toLocaleString(),
+        loadedBytes.toLocaleString(),
         "bytes"
       );
 
-      const wasmBlob = new Blob(chunks, {
-        type: "application/wasm"
-      });
 
-      const blobUrl = URL.createObjectURL(wasmBlob);
-
-      console.log("WASM Blob URL created:", blobUrl);
-
-      return blobUrl;
-    }
-
-    if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-      const meta = document.createElement("meta");
-
-      meta.name = "viewport";
-      meta.content =
-        "width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes";
-
-      document.head.appendChild(meta);
-
-      container.className = "unity-mobile";
-      canvas.className = "unity-mobile";
-
-      // Uncomment if mobile performance is poor:
-      // config.devicePixelRatio = 1;
-    } else {
-      canvas.style.width = "1280px";
-      canvas.style.height = "720px";
-    }
-
-    loadingBar.style.display = "block";
-
-    const script = document.createElement("script");
-    script.src = loaderUrl;
-
-    script.onload = async () => {
-      try {
-        /*
-          Combine:
-            .wasm.001.part1
-            .wasm.001.part2
-            .wasm.001.part3
-            .wasm.002.part1
-            .wasm.002.part2
-            .wasm.002.part3
-            .wasm.003
-
-          into one in-memory WASM file.
-        */
-
-        config.codeUrl = await buildWasmBlobUrl();
-
-        console.log("Starting Unity...");
-        console.log("Data:", config.dataUrl);
-        console.log("Framework:", config.frameworkUrl);
-        console.log("WASM:", config.codeUrl);
-
-        const unityInstance = await createUnityInstance(
-          canvas,
-          config,
-          (progress) => {
-            progressBarFull.style.width =
-              (100 * progress) + "%";
+      const blob =
+        new Blob(
+          chunks,
+          {
+            type:
+              "application/wasm"
           }
         );
 
-        loadingBar.style.display = "none";
 
-        fullscreenButton.onclick = () => {
-          unityInstance.SetFullscreen(1);
-        };
-      } catch (error) {
-        console.error("Unity startup failed:", error);
+      return URL.createObjectURL(
+        blob
+      );
 
-        loadingBar.style.display = "none";
+    }
+
+
+
+    function resizeCanvas() {
+
+      canvas.style.width =
+        window.innerWidth + "px";
+
+      canvas.style.height =
+        window.innerHeight + "px";
+
+    }
+
+
+
+    window.addEventListener(
+      "resize",
+      resizeCanvas
+    );
+
+
+    resizeCanvas();
+
+
+
+    /*
+       Fullscreen button
+    */
+
+    fullscreenButton.addEventListener(
+      "click",
+      async () => {
+
+        try {
+
+          if (
+            !document.fullscreenElement
+          ) {
+
+            await document.documentElement
+              .requestFullscreen();
+
+          }
+
+          else {
+
+            await document
+              .exitFullscreen();
+
+          }
+
+        }
+
+        catch (err) {
+
+          console.error(
+            "Fullscreen failed:",
+            err
+          );
+
+        }
+
+      }
+    );
+
+
+
+    /*
+       Load Unity loader script.
+    */
+
+    const script =
+      document.createElement("script");
+
+
+    script.src =
+      loaderUrl;
+
+
+
+    script.onload =
+      async () => {
+
+        try {
+
+          /*
+             Rebuild the WASM file
+             in browser memory.
+          */
+
+          config.codeUrl =
+            await buildWasmBlobUrl();
+
+
+
+          /*
+             Start Unity.
+
+             Unity's own progress is mapped
+             from 50% -> 100%.
+          */
+
+          const unityInstance =
+            await createUnityInstance(
+
+              canvas,
+
+              config,
+
+              progress => {
+
+                const percent =
+                  50 +
+                  Math.round(
+                    progress * 50
+                  );
+
+
+                progressBar.style.width =
+                  percent + "%";
+
+
+                loadingText.textContent =
+                  "LOADING " +
+                  percent +
+                  "%";
+
+              }
+
+            );
+
+
+
+          progressBar.style.width =
+            "100%";
+
+
+          loadingText.textContent =
+            "LOADING 100%";
+
+
+
+          /*
+             Fade loader away.
+          */
+
+          setTimeout(
+            () => {
+
+              loadingBar.classList.add(
+                "hidden"
+              );
+
+
+              fullscreenButton
+                .classList.add(
+                  "visible"
+                );
+
+
+              setTimeout(
+                () => {
+
+                  loadingBar.remove();
+
+                },
+                700
+              );
+
+            },
+            200
+          );
+
+
+
+          /*
+             Store Unity instance in case
+             you want to use it elsewhere.
+          */
+
+          window.unityInstance =
+            unityInstance;
+
+
+        }
+
+        catch (error) {
+
+          console.error(
+            "Unity startup failed:",
+            error
+          );
+
+
+          loadingText.textContent =
+            "FAILED TO LOAD";
+
+
+          unityShowBanner(
+            error.message ||
+            String(error),
+            "error"
+          );
+
+        }
+
+      };
+
+
+
+    script.onerror =
+      () => {
+
+        loadingText.textContent =
+          "FAILED TO LOAD";
+
 
         unityShowBanner(
-          "Failed to start Muddy Heights: " + error.message,
+          "Could not load " +
+          loaderUrl,
           "error"
         );
-      }
-    };
 
-    script.onerror = () => {
-      loadingBar.style.display = "none";
+      };
 
-      unityShowBanner(
-        "Failed to load Unity loader: " + loaderUrl,
-        "error"
-      );
-    };
 
-    document.body.appendChild(script);
+    document.body.appendChild(
+      script
+    );
+
   </script>
+
 </body>
 </html>
