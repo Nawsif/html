@@ -1,317 +1,641 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en-us">
 
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#000">
+
+  <meta
+    name="viewport"
+    content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no"
+  >
 
   <title>Unity WebGL Player</title>
 
   <script src="https://tinklehost.github.io/intro.js"></script>
 
   <style>
-    html {
-      background: #444;
-      font-family: sans-serif;
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap');
+
+    * {
+      box-sizing: border-box;
     }
 
     html,
     body {
+      position: fixed;
+      inset: 0;
+
+      width: 100%;
+      height: 100%;
+
       margin: 0;
-      width: 100%;
-      height: 100%;
+      padding: 0;
+
       overflow: hidden;
-      overscroll-behavior: none;
+
+      background: #000;
+
+      touch-action: none;
     }
 
-    #canvas,
-    #overlayDiv {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      border: 0;
-    }
+    /*
+       =========================
+       UNITY
+       =========================
+    */
 
-    #canvas {
-      display: none;
+    #unity-container {
+      position: fixed;
+
+      inset: 0;
+
+      width: 100vw;
+      height: 100vh;
+
+      overflow: hidden;
+
       background: #000;
     }
 
-    #overlayDiv {
-      z-index: 1;
-    }
-
-    #presplash {
+    #unity-canvas {
       position: absolute;
+
       top: 0;
       left: 0;
+
+      display: block;
+
+      width: 100% !important;
+      height: 100% !important;
+
+      margin: 0;
+      padding: 0;
+
+      border: 0;
+      outline: none;
+
+      background: #000;
+    }
+
+    /*
+       =========================
+       LOADING SCREEN
+       =========================
+    */
+
+    #unity-loading-bar {
+      position: fixed;
+
+      inset: 0;
+
+      z-index: 9000;
+
+      display: flex;
+      flex-direction: column;
+
+      align-items: center;
+      justify-content: center;
+
       width: 100%;
       height: 100%;
-      object-fit: contain;
-      z-index: 2;
-    }
 
-    #statusDiv {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
+      background: #414141;
 
-      width: 50%;
-      min-width: 340px;
-
-      margin: auto;
-      padding: 10px;
-
-      background: rgba(0, 0, 0, 0.75);
-      border-radius: 0 0 5px 5px;
-
-      z-index: 3;
-    }
-
-    #statusTextDiv {
-      overflow: auto;
-      max-height: 40vh;
-      color: #ccc;
-      font-size: 14px;
-    }
-
-    .file-row {
-      display: flex;
-      gap: 8px;
-      margin: 4px 0;
-    }
-
-    .file-name {
-      color: #F5A9B8;
-    }
-
-    .file-status {
-      color: #5BCEFA;
-    }
-
-    .file-status.pending {
-      color: #888;
-    }
-
-    #statusProgress {
-      display: none;
-      width: 100%;
-    }
-
-    #inputDiv {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-
-      width: 65%;
-
-      margin: auto;
-      padding: 10px 20px 10px 10px;
-
-      background: rgba(0, 0, 0, 0.75);
-      border-radius: 0 0 5px 5px;
-
-      z-index: 4;
-    }
-
-    #inputPrompt {
-      margin-top: 1em;
-      margin-bottom: 1em;
-      color: #eee;
-      font-size: 150%;
-    }
-
-    #inputText {
-      width: 100%;
-      padding: 5px;
-
-      background: inherit;
-      color: #eee;
-
-      font-size: 175%;
-    }
-
-    .visible {
-      visibility: visible;
       opacity: 1;
-    }
-
-    .hidden {
-      visibility: hidden;
-      opacity: 0;
+      visibility: visible;
 
       transition:
-        visibility 0s .25s,
-        opacity .25s linear;
+        opacity 0.6s ease,
+        visibility 0.6s ease;
     }
 
-    #file-merger-loading {
-      display: none !important;
+    #unity-loading-bar.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    #loader-wrapper {
+      display: flex;
+      flex-direction: column;
+
+      align-items: center;
+
+      width: min(420px, 80vw);
+    }
+
+    #loader-title {
+      margin-bottom: 30px;
+
+      font-family: "Orbitron", sans-serif;
+
+      font-size: clamp(24px, 5vw, 38px);
+
+      font-weight: 700;
+
+      letter-spacing: 3px;
+
+      background: linear-gradient(
+        90deg,
+        #d3a410,
+        #b7870f,
+        #ffe4a1
+      );
+
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+
+      filter:
+        drop-shadow(
+          0 0 8px rgba(211, 165, 16, 0.4)
+        );
+    }
+
+    #loader-icon {
+      position: relative;
+
+      width: 120px;
+      height: 120px;
+
+      margin-bottom: 30px;
+    }
+
+    .diamond {
+      position: absolute;
+
+      left: 50%;
+      top: 50%;
+
+      width: 54px;
+      height: 54px;
+
+      border: 2px solid #d3a410;
+
+      transform:
+        translate(-50%, -50%)
+        rotate(45deg);
+
+      animation:
+        diamondPulse 2s ease-in-out infinite;
+    }
+
+    .diamond:nth-child(2) {
+      width: 72px;
+      height: 72px;
+
+      border-color:
+        rgba(211, 164, 16, 0.55);
+
+      animation-delay: 0.25s;
+    }
+
+    .diamond-core {
+      position: absolute;
+
+      left: 50%;
+      top: 50%;
+
+      width: 42px;
+      height: 42px;
+
+      transform:
+        translate(-50%, -50%)
+        rotate(45deg);
+
+      background:
+        linear-gradient(
+          135deg,
+          #1e2026,
+          #414750
+        );
+
+      border:
+        1px solid #d3a410;
+
+      box-shadow:
+        0 0 20px
+        rgba(211, 165, 16, 0.18);
+    }
+
+    @keyframes diamondPulse {
+      0%,
+      100% {
+        transform:
+          translate(-50%, -50%)
+          rotate(45deg)
+          scale(0.9);
+
+        opacity: 0.45;
+      }
+
+      50% {
+        transform:
+          translate(-50%, -50%)
+          rotate(45deg)
+          scale(1.08);
+
+        opacity: 1;
+      }
+    }
+
+    /*
+       =========================
+       PROGRESS
+       =========================
+    */
+
+    #progress-shell {
+      width: 100%;
+      height: 8px;
+
+      overflow: hidden;
+
+      background: #292d34;
+
+      border:
+        1px solid rgba(211, 164, 16, 0.45);
+
+      border-radius: 20px;
+
+      box-shadow:
+        0 0 12px
+        rgba(211, 165, 16, 0.12);
+    }
+
+    #unity-progress-bar-full {
+      width: 0%;
+      height: 100%;
+
+      border-radius: inherit;
+
+      background: linear-gradient(
+        90deg,
+        #b7870f,
+        #d3a410,
+        #ffe4a1
+      );
+
+      transition:
+        width 0.12s linear;
+
+      box-shadow:
+        0 0 12px
+        rgba(211, 165, 16, 0.5);
+    }
+
+    #loading-text {
+      margin-top: 12px;
+
+      font-family:
+        "Orbitron",
+        sans-serif;
+
+      font-size: 11px;
+
+      letter-spacing: 2px;
+
+      color: #d6d6d6;
+    }
+
+    /*
+       =========================
+       WARNINGS
+       =========================
+    */
+
+    #unity-warning {
+      position: fixed;
+
+      left: 50%;
+      top: 15px;
+
+      z-index: 10000;
+
+      width: min(700px, 90vw);
+
+      transform:
+        translateX(-50%);
+
+      font-family:
+        Arial,
+        sans-serif;
+
+      text-align: center;
+    }
+
+    /*
+       =========================
+       FULLSCREEN BUTTON
+       =========================
+    */
+
+    #fullscreen-button {
+      position: fixed;
+
+      right: 18px;
+      bottom: 18px;
+
+      z-index: 8000;
+
+      width: 44px;
+      height: 44px;
+
+      display: flex;
+
+      align-items: center;
+      justify-content: center;
+
+      border:
+        1px solid
+        rgba(211, 164, 16, 0.7);
+
+      border-radius: 8px;
+
+      background:
+        rgba(30, 32, 38, 0.82);
+
+      color: #d3a410;
+
+      cursor: pointer;
+
+      opacity: 0;
+
+      pointer-events: none;
+
+      transition:
+        opacity 0.25s ease,
+        background 0.2s ease,
+        transform 0.2s ease;
+    }
+
+    #fullscreen-button.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    #fullscreen-button:hover {
+      background:
+        rgba(65, 71, 80, 0.95);
+
+      transform:
+        scale(1.05);
+    }
+
+    #fullscreen-button svg {
+      width: 22px;
+      height: 22px;
+
+      fill: currentColor;
+    }
+
+    @media (pointer: coarse) {
+      #fullscreen-button {
+        width: 50px;
+        height: 50px;
+      }
     }
   </style>
 </head>
 
 <body>
 
-  <canvas
-    id="canvas"
-    tabindex="-1"
-    oncontextmenu="event.preventDefault()"
-  ></canvas>
+  <div id="unity-container">
 
-  <div id="overlayDiv"></div>
+    <canvas
+      id="unity-canvas"
+      tabindex="-1"
+    ></canvas>
 
-  <img
-    id="presplash"
-    src="splash.png"
-    alt=""
-  >
+  </div>
 
-  <div id="statusDiv" class="visible">
 
-    <div id="statusTextDiv">
+  <!-- Loader -->
 
-      <div class="file-row">
-        <span class="file-name">build8.data:</span>
+  <div id="unity-loading-bar">
 
-        <span
-          id="status-build8-data"
-          class="file-status pending"
-        >
-          waiting...
-        </span>
+    <div id="loader-wrapper">
+
+      <div id="loader-title">
+        Tinkle Games
       </div>
 
-      <div class="file-row">
-        <span class="file-name">build8.wasm:</span>
+      <div id="loader-icon">
 
-        <span
-          id="status-build8-wasm"
-          class="file-status pending"
-        >
-          waiting...
-        </span>
+        <div class="diamond"></div>
+
+        <div class="diamond"></div>
+
+        <div class="diamond-core"></div>
+
       </div>
 
-      <div class="file-row">
-        <span class="file-name">engine:</span>
+      <div id="progress-shell">
 
-        <span
-          id="status-engine"
-          class="file-status pending"
-        >
-          waiting...
-        </span>
+        <div
+          id="unity-progress-bar-full"
+        ></div>
+
+      </div>
+
+      <div id="loading-text">
+        LOADING 0%
       </div>
 
     </div>
 
-    <progress
-      id="statusProgress"
-      value="0"
-      max="100"
-    ></progress>
-
   </div>
 
 
-  <div id="inputDiv" class="hidden">
+  <div id="unity-warning"></div>
 
-    <form id="inputForm">
 
-      <div id="inputPrompt"></div>
+  <button
+    id="fullscreen-button"
+    title="Fullscreen"
+    aria-label="Fullscreen"
+  >
 
-      <input
-        id="inputText"
-        type="text"
-      >
+    <svg viewBox="0 0 24 24">
 
-    </form>
+      <path d="
+        M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zm-3-12v2h3v3h2V5h-5z
+      "/>
 
-  </div>
+    </svg>
+
+  </button>
 
 
   <script>
     /*
-      PAGE:
-      https://nawsif.github.io/html/swh/
-
-      GAME REPO:
-      https://github.com/nawsif/host/tree/main/swh
+       =========================
+       ELEMENTS
+       =========================
     */
 
-    const RAW_BUILD_ROOT =
-      "https://raw.githubusercontent.com/nawsif/host/main/swh/Build/";
+    const canvas =
+      document.querySelector(
+        "#unity-canvas"
+      );
+
+    const loadingBar =
+      document.querySelector(
+        "#unity-loading-bar"
+      );
+
+    const progressBar =
+      document.querySelector(
+        "#unity-progress-bar-full"
+      );
+
+    const loadingText =
+      document.querySelector(
+        "#loading-text"
+      );
+
+    const warningBanner =
+      document.querySelector(
+        "#unity-warning"
+      );
+
+    const fullscreenButton =
+      document.querySelector(
+        "#fullscreen-button"
+      );
+
+
+    /*
+       =========================
+       FILE LOCATIONS
+       =========================
+    */
+
+    /*
+       Loader/framework:
+       jsDelivr
+
+       DATA/WASM pieces:
+       raw.githubusercontent
+    */
 
     const CDN_BUILD_ROOT =
       "https://cdn.jsdelivr.net/gh/nawsif/host@main/swh/Build/";
+
+    const RAW_BUILD_ROOT =
+      "https://raw.githubusercontent.com/nawsif/host/main/swh/Build/";
 
     const STREAMING_ASSETS_ROOT =
       "https://cdn.jsdelivr.net/gh/nawsif/host@main/swh/StreamingAssets";
 
 
     const DATA_PARTS = 7;
+
     const WASM_PARTS = 3;
 
 
     /*
-     * Mobile viewport
-     */
+       =========================
+       WARNINGS
+       =========================
+    */
 
-    if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+    function unityShowBanner(
+      msg,
+      type
+    ) {
 
-      const meta =
-        document.createElement("meta");
+      const div =
+        document.createElement(
+          "div"
+        );
 
-      meta.name = "viewport";
+      div.textContent =
+        msg;
 
-      meta.content =
-        "width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes";
+      div.style.padding =
+        "10px";
 
-      document.head.appendChild(meta);
+      div.style.marginBottom =
+        "5px";
+
+      div.style.borderRadius =
+        "6px";
+
+
+      if (
+        type === "error"
+      ) {
+
+        div.style.background =
+          "#b3261e";
+
+        div.style.color =
+          "#fff";
+
+      }
+
+      else if (
+        type === "warning"
+      ) {
+
+        div.style.background =
+          "#d3a410";
+
+        div.style.color =
+          "#1e2026";
+
+      }
+
+      else {
+
+        div.style.background =
+          "#292d34";
+
+        div.style.color =
+          "#fff";
+
+      }
+
+
+      warningBanner.appendChild(
+        div
+      );
+
+
+      if (
+        type !== "error"
+      ) {
+
+        setTimeout(
+          () => {
+            div.remove();
+          },
+          5000
+        );
+
+      }
     }
 
 
     /*
-     * Status helper
-     */
+       =========================
+       SPLIT FILE URLS
+       =========================
+    */
 
-    function setStatus(id, text, done = false) {
-
-      const el =
-        document.getElementById(id);
-
-      if (!el) {
-        return;
-      }
-
-      el.textContent = text;
-
-      el.classList.remove("pending");
-
-      if (done) {
-        el.style.color = "#00e676";
-      } else {
-        el.style.color = "#ffeb3b";
-      }
-    }
-
-
-    /*
-     * Build split file URLs
-     */
-
-    function getParts(fileName, totalParts) {
+    function getParts(
+      fileName,
+      amount
+    ) {
 
       const parts = [];
 
-      for (let i = 0; i < totalParts; i++) {
+
+      for (
+        let i = 0;
+        i < amount;
+        i++
+      ) {
 
         parts.push(
           RAW_BUILD_ROOT +
@@ -319,31 +643,43 @@
           ".part" +
           i
         );
+
       }
+
 
       return parts;
     }
 
 
     /*
-     * Download and merge split files
-     */
+       =========================
+       MERGE FILES
+       =========================
+    */
 
-    async function mergeFiles(fileParts, onProgress) {
+    async function mergeFiles(
+      parts,
+      progressStart,
+      progressEnd
+    ) {
 
       const buffers = [];
 
+      let totalBytes = 0;
+
+
       for (
-        let index = 0;
-        index < fileParts.length;
-        index++
+        let i = 0;
+        i < parts.length;
+        i++
       ) {
 
         const url =
-          fileParts[index];
+          parts[i];
+
 
         console.log(
-          `[${index + 1}/${fileParts.length}] Fetching`,
+          `Loading ${i + 1}/${parts.length}`,
           url
         );
 
@@ -352,68 +688,80 @@
           await fetch(
             url,
             {
-              mode: "cors",
               cache: "no-store"
             }
           );
 
 
-        if (!response.ok) {
+        if (
+          !response.ok
+        ) {
 
           throw new Error(
-            `Failed to fetch ${url} - HTTP ${response.status}`
+            "Failed to load " +
+            url +
+            " (" +
+            response.status +
+            ")"
           );
+
         }
 
 
         const buffer =
-          await response.arrayBuffer();
+          await response
+            .arrayBuffer();
 
-        buffers.push(buffer);
+
+        buffers.push(
+          buffer
+        );
 
 
-        if (onProgress) {
+        totalBytes +=
+          buffer.byteLength;
 
-          onProgress(
-            index + 1,
-            fileParts.length
+
+        /*
+           Update loader progress.
+        */
+
+        const localProgress =
+          (i + 1) /
+          parts.length;
+
+
+        const percent =
+          Math.round(
+            progressStart +
+            localProgress *
+            (
+              progressEnd -
+              progressStart
+            )
           );
-        }
+
+
+        progressBar.style.width =
+          percent + "%";
+
+
+        loadingText.textContent =
+          "LOADING " +
+          percent +
+          "%";
       }
 
 
-      let totalLength = 0;
-
-      for (const buffer of buffers) {
-
-        totalLength +=
-          buffer.byteLength;
-      }
-
-
-      const merged =
-        new Uint8Array(
-          totalLength
-        );
-
-
-      let offset = 0;
-
-
-      for (const buffer of buffers) {
-
-        merged.set(
-          new Uint8Array(buffer),
-          offset
-        );
-
-        offset +=
-          buffer.byteLength;
-      }
+      console.log(
+        "Merged:",
+        totalBytes.toLocaleString(),
+        "bytes"
+      );
 
 
       return new Blob(
-        [merged],
+        buffers,
         {
           type:
             "application/octet-stream"
@@ -423,269 +771,290 @@
 
 
     /*
-     * Initial status
-     */
+       =========================
+       CANVAS SIZE
+       =========================
 
-    setStatus(
-      "status-build8-data",
-      "merging... part0/part6"
+       CSS handles the visual size.
+
+       These width/height values make
+       Unity's actual rendering buffer
+       match the browser.
+    */
+
+    function resizeCanvas() {
+
+      const width =
+        window.innerWidth;
+
+      const height =
+        window.innerHeight;
+
+
+      /*
+         Force visual size.
+      */
+
+      canvas.style.width =
+        width + "px";
+
+      canvas.style.height =
+        height + "px";
+
+
+      /*
+         Important:
+
+         Do NOT multiply these values
+         manually by devicePixelRatio.
+
+         Unity handles DPR using
+         config.devicePixelRatio.
+
+         Multiplying both is one reason
+         WebGL games can look extremely
+         zoomed-in.
+      */
+
+      canvas.width =
+        width;
+
+      canvas.height =
+        height;
+    }
+
+
+    window.addEventListener(
+      "resize",
+      resizeCanvas
     );
 
-    setStatus(
-      "status-build8-wasm",
-      "merging... part0/part2"
+
+    window.addEventListener(
+      "orientationchange",
+      () => {
+
+        setTimeout(
+          resizeCanvas,
+          100
+        );
+
+      }
     );
 
-    setStatus(
-      "status-engine",
-      "waiting..."
-    );
+
+    resizeCanvas();
 
 
     /*
-     * DATA
-     */
+       =========================
+       FULLSCREEN
+       =========================
+    */
 
-    const dataPromise =
-      mergeFiles(
+    fullscreenButton
+      .addEventListener(
+        "click",
+        async () => {
 
-        getParts(
-          "build8.data",
-          DATA_PARTS
-        ),
+          try {
 
-        (done, total) => {
+            if (
+              window.unityInstance &&
+              typeof window
+                .unityInstance
+                .SetFullscreen ===
+                "function"
+            ) {
 
-          setStatus(
-            "status-build8-data",
-            `merging... part${done - 1}/part${total - 1}`
-          );
+              /*
+                 Unity's fullscreen API
+                 usually handles canvas
+                 sizing better.
+              */
+
+              window
+                .unityInstance
+                .SetFullscreen(1);
+
+            }
+
+            else if (
+              !document
+                .fullscreenElement
+            ) {
+
+              await document
+                .documentElement
+                .requestFullscreen();
+
+            }
+
+            else {
+
+              await document
+                .exitFullscreen();
+
+            }
+
+
+            setTimeout(
+              resizeCanvas,
+              100
+            );
+
+          }
+
+          catch (
+            error
+          ) {
+
+            console.error(
+              "Fullscreen failed:",
+              error
+            );
+
+          }
+
         }
-      )
+      );
 
-      .then(blob => {
 
-        setStatus(
-          "status-build8-data",
-          "done ✓",
-          true
+    document.addEventListener(
+      "fullscreenchange",
+      () => {
+
+        setTimeout(
+          resizeCanvas,
+          100
         );
 
-        return blob;
-      });
+      }
+    );
 
 
     /*
-     * WASM
-     */
+       =========================
+       START GAME
+       =========================
+    */
 
-    const wasmPromise =
-      mergeFiles(
+    async function startGame() {
 
-        getParts(
-          "build8.wasm",
-          WASM_PARTS
-        ),
+      try {
 
-        (done, total) => {
+        /*
+           DATA = 0 -> 30%
+        */
 
-          setStatus(
-            "status-build8-wasm",
-            `merging... part${done - 1}/part${total - 1}`
+        const dataBlob =
+          await mergeFiles(
+
+            getParts(
+              "build8.data",
+              DATA_PARTS
+            ),
+
+            0,
+
+            30
           );
-        }
-      )
-
-      .then(blob => {
-
-        setStatus(
-          "status-build8-wasm",
-          "done ✓",
-          true
-        );
-
-        return blob;
-      });
 
 
-    /*
-     * Start Unity once both large files are merged
-     */
+        /*
+           WASM = 30 -> 60%
+        */
 
-    Promise.all([
-      dataPromise,
-      wasmPromise
-    ])
+        const wasmBlob =
+          await mergeFiles(
 
-    .then(
-      async ([dataBlob, wasmBlob]) => {
+            getParts(
+              "build8.wasm",
+              WASM_PARTS
+            ),
 
-        console.log(
-          "Both split files merged"
-        );
+            30,
 
+            60
+          );
+
+
+        /*
+           Turn merged files into
+           browser blob URLs.
+        */
 
         const dataBlobUrl =
           URL.createObjectURL(
             dataBlob
           );
 
+
         const wasmBlobUrl =
           URL.createObjectURL(
-            wasmBlob
+            new Blob(
+              [wasmBlob],
+              {
+                type:
+                  "application/wasm"
+              }
+            )
           );
 
 
-        console.log(
-          "DATA blob:",
-          dataBlobUrl
-        );
+        /*
+           =========================
+           UNITY CONFIG
+           =========================
+        */
 
-        console.log(
-          "WASM blob:",
-          wasmBlobUrl
-        );
+        const config = {
+
+          dataUrl:
+            dataBlobUrl,
+
+          frameworkUrl:
+            CDN_BUILD_ROOT +
+            "build8.framework.js",
+
+          codeUrl:
+            wasmBlobUrl,
+
+          streamingAssetsUrl:
+            STREAMING_ASSETS_ROOT,
+
+          companyName:
+            "Banzai Project",
+
+          productName:
+            "Unity WebGL Game",
+
+          productVersion:
+            "1.9",
+
+          showBanner:
+            unityShowBanner,
+
+
+          /*
+             Use CSS pixels.
+
+             This helps prevent the
+             game from looking way too
+             zoomed-in on high-DPI
+             displays like a MacBook.
+          */
+
+          devicePixelRatio:
+            1
+        };
 
 
         /*
-         * Intercept fetch requests made by Unity.
-         */
-
-        const originalFetch =
-          window.fetch.bind(window);
-
-
-        window.fetch =
-          async function(resource, options) {
-
-            let url = "";
-
-            if (
-              typeof resource ===
-              "string"
-            ) {
-
-              url = resource;
-
-            } else if (
-              resource &&
-              resource.url
-            ) {
-
-              url =
-                resource.url;
-            }
-
-
-            if (
-              url &&
-              url.includes(
-                "build8.data"
-              )
-            ) {
-
-              console.log(
-                "Unity requested DATA -> using merged blob"
-              );
-
-              return originalFetch(
-                dataBlobUrl,
-                options
-              );
-            }
-
-
-            if (
-              url &&
-              url.includes(
-                "build8.wasm"
-              )
-            ) {
-
-              console.log(
-                "Unity requested WASM -> using merged blob"
-              );
-
-              return originalFetch(
-                wasmBlobUrl,
-                options
-              );
-            }
-
-
-            return originalFetch(
-              resource,
-              options
-            );
-          };
-
-
-        /*
-         * Also intercept XMLHttpRequest,
-         * since some Unity loaders use XHR.
-         */
-
-        const originalOpen =
-          XMLHttpRequest
-            .prototype
-            .open;
-
-
-        XMLHttpRequest.prototype.open =
-          function(
-            method,
-            url,
-            ...rest
-          ) {
-
-            if (
-              typeof url ===
-              "string"
-            ) {
-
-              if (
-                url.includes(
-                  "build8.data"
-                )
-              ) {
-
-                console.log(
-                  "XHR DATA -> merged blob"
-                );
-
-                url =
-                  dataBlobUrl;
-              }
-
-
-              if (
-                url.includes(
-                  "build8.wasm"
-                )
-              ) {
-
-                console.log(
-                  "XHR WASM -> merged blob"
-                );
-
-                url =
-                  wasmBlobUrl;
-              }
-            }
-
-
-            return originalOpen.call(
-              this,
-              method,
-              url,
-              ...rest
-            );
-          };
-
-
-        /*
-         * Load Unity loader from jsDelivr.
-         */
+           =========================
+           LOADER
+           =========================
+        */
 
         const loaderUrl =
           CDN_BUILD_ROOT +
@@ -698,286 +1067,241 @@
         );
 
 
-        const loaderScript =
+        const script =
           document.createElement(
             "script"
           );
 
 
-        loaderScript.src =
+        script.src =
           loaderUrl;
 
 
-        loaderScript.onload =
-          function() {
+        script.onload =
+          async () => {
 
-            console.log(
-              "Unity loader loaded"
-            );
+            try {
 
-
-            if (
-              typeof createUnityInstance !==
-              "function"
-            ) {
-
-              throw new Error(
-                "build8.loader.js loaded but createUnityInstance was not found."
-              );
-            }
+              resizeCanvas();
 
 
-            setStatus(
-              "status-engine",
-              "starting..."
-            );
+              /*
+                 Unity loading:
+                 60 -> 100%
+              */
+
+              const unityInstance =
+                await createUnityInstance(
+
+                  canvas,
+
+                  config,
+
+                  progress => {
+
+                    const percent =
+                      60 +
+                      Math.round(
+                        progress *
+                        40
+                      );
 
 
-            document
-              .getElementById(
-                "canvas"
-              )
-              .style
-              .display =
-                "block";
+                    progressBar
+                      .style
+                      .width =
+                        percent +
+                        "%";
 
 
-            createUnityInstance(
+                    loadingText
+                      .textContent =
+                        "LOADING " +
+                        percent +
+                        "%";
 
-              document.querySelector(
-                "#canvas"
-              ),
+                  }
 
-              {
-                /*
-                 * These get intercepted above
-                 * and replaced with our merged blobs.
-                 */
-
-                dataUrl:
-                  "Build/build8.data",
-
-                codeUrl:
-                  "Build/build8.wasm",
+                );
 
 
-                /*
-                 * Normal Unity files still come
-                 * directly from jsDelivr.
-                 */
-
-                frameworkUrl:
-                  CDN_BUILD_ROOT +
-                  "build8.framework.js",
-
-                streamingAssetsUrl:
-                  STREAMING_ASSETS_ROOT,
+              window.unityInstance =
+                unityInstance;
 
 
-                companyName:
-                  "Banzai Project",
-
-                productName:
-                  "Unity WebGL Game",
-
-                productVersion:
-                  "1.9"
-              },
+              progressBar.style.width =
+                "100%";
 
 
-              function(progress) {
+              loadingText.textContent =
+                "LOADING 100%";
 
-                const percent =
-                  Math.round(
-                    progress * 100
+
+              /*
+                 Resize again AFTER
+                 Unity initializes.
+
+                 This is important because
+                 Unity's loader may alter
+                 canvas dimensions.
+              */
+
+              resizeCanvas();
+
+
+              requestAnimationFrame(
+                () => {
+
+                  resizeCanvas();
+
+                  requestAnimationFrame(
+                    resizeCanvas
                   );
 
-
-                setStatus(
-                  "status-engine",
-                  `booting... ${percent}%`
-                );
-              }
-            )
+                }
+              );
 
 
-            .then(
-              function(unityInstance) {
-
-                window.unityInstance =
-                  unityInstance;
-
-
-                console.log(
-                  "Unity started successfully"
-                );
+              setTimeout(
+                resizeCanvas,
+                100
+              );
 
 
-                setStatus(
-                  "status-engine",
-                  "done ✓",
-                  true
-                );
+              setTimeout(
+                resizeCanvas,
+                500
+              );
 
 
-                document
-                  .getElementById(
-                    "statusDiv"
-                  )
-                  .className =
-                    "hidden";
+              /*
+                 Fade loader away.
+              */
+
+              setTimeout(
+                () => {
+
+                  loadingBar
+                    .classList
+                    .add(
+                      "hidden"
+                    );
 
 
-                document
-                  .getElementById(
-                    "overlayDiv"
-                  )
-                  .className =
-                    "hidden";
+                  fullscreenButton
+                    .classList
+                    .add(
+                      "visible"
+                    );
 
 
-                document
-                  .getElementById(
-                    "presplash"
-                  )
-                  .className =
-                    "hidden";
-              }
-            )
+                  setTimeout(
+                    () => {
+
+                      loadingBar
+                        .remove();
+
+                    },
+
+                    700
+                  );
+
+                },
+
+                200
+              );
 
 
-            .catch(
-              function(error) {
+              console.log(
+                "Unity started."
+              );
 
-                console.error(
-                  "Unity startup error:",
-                  error
-                );
+            }
+
+            catch (
+              error
+            ) {
+
+              console.error(
+                "Unity startup failed:",
+                error
+              );
 
 
-                showError(
-                  "Unity failed to start.",
-                  error
-                );
-              }
-            );
+              loadingText
+                .textContent =
+                  "FAILED TO LOAD";
+
+
+              unityShowBanner(
+
+                error.message ||
+                String(error),
+
+                "error"
+
+              );
+
+            }
+
           };
 
 
-        loaderScript.onerror =
-          function(error) {
+        script.onerror =
+          () => {
 
-            console.error(
-              "Failed to load loader:",
-              error
+            loadingText
+              .textContent =
+                "FAILED TO LOAD";
+
+
+            unityShowBanner(
+
+              "Could not load " +
+              loaderUrl,
+
+              "error"
+
             );
 
-
-            showError(
-              "Failed to load Unity loader script.",
-              loaderUrl
-            );
           };
 
 
         document.body.appendChild(
-          loaderScript
+          script
         );
+
       }
-    )
 
-
-    .catch(
-      function(error) {
+      catch (
+        error
+      ) {
 
         console.error(
-          "Failed to merge game files:",
+          "Game loading failed:",
           error
         );
 
 
-        showError(
-          "Error loading game.",
-          error
+        loadingText
+          .textContent =
+            "FAILED TO LOAD";
+
+
+        unityShowBanner(
+
+          error.message ||
+          String(error),
+
+          "error"
+
         );
+
       }
-    );
-
-
-    /*
-     * Error UI
-     */
-
-    function showError(title, error) {
-
-      const message =
-        error &&
-        error.message
-          ? error.message
-          : String(error);
-
-
-      document
-        .getElementById(
-          "statusTextDiv"
-        )
-        .innerHTML =
-          `
-          <div style="
-            color:#ff6666;
-            word-break:break-word;
-          ">
-            ${escapeHtml(title)}
-            <br>
-
-            <small style="
-              font-size:0.8rem;
-              color:#ddd;
-            ">
-              ${escapeHtml(message)}
-            </small>
-          </div>
-          `;
-
-
-      document
-        .getElementById(
-          "statusDiv"
-        )
-        .className =
-          "visible";
     }
 
 
-    function escapeHtml(value) {
-
-      return String(value)
-
-        .replaceAll(
-          "&",
-          "&amp;"
-        )
-
-        .replaceAll(
-          "<",
-          "&lt;"
-        )
-
-        .replaceAll(
-          ">",
-          "&gt;"
-        )
-
-        .replaceAll(
-          '"',
-          "&quot;"
-        )
-
-        .replaceAll(
-          "'",
-          "&#039;"
-        );
-    }
+    startGame();
 
   </script>
 
