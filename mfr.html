@@ -8,7 +8,6 @@
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <title>My Femboy Roommate</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icons/icon-72x72.png" sizes="72x72" type="image/png" />
   <link rel="icon" href="icons/icon-96x96.png" sizes="96x96" type="image/png" />
   <link rel="icon" href="icons/icon-128x128.png" sizes="128x128" type="image/png" />
@@ -217,15 +216,23 @@
     </form>
   </div>
 
-  <script>
-      // Register the service worker.
-      if (navigator.serviceWorker) {
-          if (!navigator.serviceWorker.controller) {
-              navigator.serviceWorker.register('./service-worker.js', { updateViaCache: 'all' });
-          }
-      }
-  </script>
   <script src="renpy-pre.js"></script>
+  <script>
+    // Keep the normal CDN base for game assets, but load the Ren'Py WASM
+    // directly from GitHub Raw instead of jsDelivr. This avoids jsDelivr
+    // returning 503 for renpy.wasm.
+    window.Module = window.Module || {};
+    const previousLocateFile = window.Module.locateFile;
+    window.Module.locateFile = function(path, prefix) {
+      if (path === 'renpy.wasm' || path.endsWith('/renpy.wasm')) {
+        return 'https://raw.githubusercontent.com/nawsif/host/main/myfemboyroomate/renpy.wasm';
+      }
+      if (typeof previousLocateFile === 'function') {
+        return previousLocateFile(path, prefix);
+      }
+      return (prefix || '') + path;
+    };
+  </script>
   <script async type="text/javascript" src="renpy.js"></script>
 </body>
 
