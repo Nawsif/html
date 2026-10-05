@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en-us">
+<head>
+  <script src="https://tinklehost.github.io/intro.js"></script>
+<base href="https://cdn.jsdelivr.net/gh/nawsif/host@main/swh">
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <title>Unity WebGL Player | SexWithHitler</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#000">
+
+  <style>
+    html {
+      background: #444;
+      font-family: sans-serif;
+    }
+
+    body, html {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overscroll-behavior: none;
+      overflow: hidden;
+    }
+
+    #canvas, #overlayDiv {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: 0 none;
+    }
+
+    #canvas {
+      background: #000;
+      display: none;
+    }
+
+    .visible {
+      visibility: visible;
+      opacity: 1;
+      transition: opacity .1s linear;
+    }
+
+    .hidden {
+      visibility: hidden;
+      opacity: 0;
+      transition: visibility 0s .25s, opacity .25s linear;
+    }
+
+    #statusDiv, #inputDiv {
+      background: rgba(0, 0, 0, 0.75);
+      width: 50%;
+      margin: auto;
+      min-width: 340px;
+      padding: 10px;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      border-radius: 0 0 5px 5px;
+      z-index: 3;
+    }
+
+    #statusTextDiv {
+      overflow: auto;
+      max-height: 40vh;
+      color: #ccc;
+      font-size: 14px;
+    }
+
+    #statusProgress {
+      display: none;
+      width: 100%;
+    }
+
+    #inputDiv {
+      width: 65%;
+      padding-left: 10px;
+      padding-right: 20px;
+    }
+
+    #inputPrompt {
+      color: #eee;
+      font-size: 150%;
+      margin-bottom: 1em;
+      margin-top: 1em;
+    }
+
+    #inputText {
+      width: 100%;
+      font-size: 175%;
+      padding: 5px;
+      background: inherit;
+      color: #eee;
+    }
+
+    #inputText:focus {
+      color: #ffffff;
+    }
+
+    #presplash {
+      position: absolute;
+      top: 0;
+      left: 0;
+      display: block;
+      margin: auto;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      z-index: 1;
+    }
+
+    .file-row {
+      display: flex;
+      gap: 8px;
+      margin: 4px 0;
+    }
+
+    .file-name { color: #F5A9B8; }
+    .file-status { color: #5BCEFA; }
+    .file-status.pending { color: #888; }
+    #file-merger-loading { display: none !important; }
+  </style>
+</head>
+
+<body>
+  <canvas id="canvas" oncontextmenu="event.preventDefault()" tabindex="-1"></canvas>
+  <div id="overlayDiv"></div>
+
+  <img id="presplash" src="splash.png" alt="presplash background">
+
+  <div id="statusDiv" class="visible">
+    <div id="statusTextDiv">
+      <div class="file-row">
+        <span class="file-name">build8.data:</span>
+        <span class="file-status pending" id="status-build8-data">merging... part0/part6</span>
+      </div>
+      <div class="file-row">
+        <span class="file-name">build8.wasm:</span>
+        <span class="file-status pending" id="status-build8-wasm">merging... part0/part2</span>
+      </div>
+      <div class="file-row">
+        <span class="file-name">engine:</span>
+        <span class="file-status pending" id="status-engine">waiting...</span>
+      </div>
+    </div>
+    <progress id="statusProgress" value="0" max="100"></progress>
+  </div>
+
+  <div id="inputDiv" class="hidden">
+    <form id="inputForm">
+      <div id="inputPrompt"></div>
+      <input id="inputText" type="text">
+    </form>
+  </div>
+
+  <script>
+    if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+      var meta = document.createElement("meta");
+      meta.name = "viewport";
+      meta.content = "width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes";
+      document.getElementsByTagName("head")[0].appendChild(meta);
+    }
+
+    function mergeFiles(fileParts, onProgress) {
+      return new Promise((resolve, reject) => {
+        let buffers = [];
+
+        function fetchPart(index) {
+          if (index >= fileParts.length) {
+            const totalLength = buffers.reduce((sum, buf) => sum + buf.byteLength, 0);
+            const combined = new Uint8Array(totalLength);
+            let offset = 0;
+            for (const buf of buffers) {
+              combined.set(new Uint8Array(buf), offset);
+              offset += buf.byteLength;
+            }
+            const mergedBlob = new Blob([combined], { type: "application/octet-stream" });
+            resolve(mergedBlob);
+            return;
+          }
+
+          fetch(fileParts[index])
+            .then((resp) => {
+              if (!resp.ok) throw new Error(`Failed to fetch ${fileParts[index]}`);
+              return resp.arrayBuffer();
+            })
+            .then((data) => {
+              buffers.push(data);
+              if (onProgress) onProgress(index + 1, fileParts.length);
+              fetchPart(index + 1);
+            })
+            .catch(reject);
+        }
+
+        fetchPart(0);
+      });
+    }
+
+    function getParts(file, totalParts) {
+      let parts = [];
+      for (let i = 0; i < totalParts; i++) {
+        parts.push(`${file}.part${i}`);
+      }
+      return parts;
+    }
+
+    function setStatus(id, text, done) {
+      const el = document.getElementById(id);
+      el.textContent = text;
+      el.classList.remove("pending");
+      if (done) el.style.color = "#00e676";
+      else el.style.color = "#ffeb3b";
+    }
+
+    const dataParts = 7;
+    const wasmParts = 3;
+
+    setStatus("status-build8-data", "merging... part0/part6");
+    setStatus("status-build8-wasm", "merging... part0/part2");
+    setStatus("status-engine", "waiting...");
+
+    const dataPromise = mergeFiles(getParts("Build/build8.data", dataParts), (done, total) => {
+      setStatus("status-build8-data", `merging... part${done - 1}/part${total - 1}`);
+    }).then((blob) => {
+      setStatus("status-build8-data", "done ✓", true);
+      return blob;
+    });
+
+    const wasmPromise = mergeFiles(getParts("Build/build8.wasm", wasmParts), (done, total) => {
+      setStatus("status-build8-wasm", `merging... part${done - 1}/part${total - 1}`);
+    }).then((blob) => {
+      setStatus("status-build8-wasm", "done ✓", true);
+      return blob;
+    });
+
+    Promise.all([dataPromise, wasmPromise])
+      .then(([dataBlob, wasmBlob]) => {
+        const dataBlobUrl = URL.createObjectURL(dataBlob);
+        const wasmBlobUrl = URL.createObjectURL(wasmBlob);
+
+        const originalFetch = window.fetch;
+        window.fetch = async function(url, ...args) {
+          if (typeof url === "string") {
+            if (url.includes("build8.data")) return originalFetch(dataBlobUrl, ...args);
+            if (url.includes("build8.wasm")) return originalFetch(wasmBlobUrl, ...args);
+          }
+          return originalFetch(url, ...args);
+        };
+
+        const originalOpen = XMLHttpRequest.prototype.open;
+        XMLHttpRequest.prototype.open = function(method, url, ...rest) {
+          if (typeof url === "string") {
+            if (url.includes("build8.data")) url = dataBlobUrl;
+            if (url.includes("build8.wasm")) url = wasmBlobUrl;
+          }
+          return originalOpen.call(this, method, url, ...rest);
+        };
+
+        const loaderScript = document.createElement("script");
+        loaderScript.src = "Build/build8.loader.js";
+        loaderScript.onload = () => {
+          setTimeout(() => {
+            document.getElementById("statusDiv").className = "hidden";
+            document.getElementById("overlayDiv").className = "hidden";
+            document.getElementById("presplash").className = "hidden";
+            document.getElementById("canvas").style.display = "block";
+
+            createUnityInstance(document.querySelector("#canvas"), {
+              dataUrl: "Build/build8.data",
+              frameworkUrl: "Build/build8.framework.js",
+              codeUrl: "Build/build8.wasm",
+              streamingAssetsUrl: "StreamingAssets",
+              companyName: "Banzai Project",
+              productName: "SexWithHitler",
+              productVersion: "1.9",
+            }, (progress) => {
+              setStatus("status-engine", `booting... ${Math.round(progress * 100)}%`);
+            }).then(() => {
+              setStatus("status-engine", "done ✓", true);
+            });
+          }, 500);
+        };
+        loaderScript.onerror = () => {
+          document.getElementById("statusTextDiv").innerHTML =
+            `<div style="color:#ff6666">Failed to load Unity loader script.</div>`;
+        };
+        document.body.appendChild(loaderScript);
+      })
+      .catch((err) => {
+        console.error("Failed to merge parts:", err);
+        document.getElementById("statusTextDiv").innerHTML =
+          `<div style="color:#ff4444">Error loading game.<br><small style="font-size:0.8rem">${err.message}</small></div>`;
+      });
+  </script>
+</body>
+</html>
