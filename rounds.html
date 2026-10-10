@@ -2,25 +2,25 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <base href="https://cdn.jsdelivr.net/gh/nawsif/host@main/ROUNDS/">
+  <base href="https://cdn.jsdelivr.net/gh/nawsif/host@baec8a7a378b17584cfb9e1851855236ac81cd3d/ROUNDS/">
   <script src="https://tinklehost.github.io/intro.js"></script>
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#414141">
   <title>ROUNDS | Tinkle Games</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
   <style>
-    *{box-sizing:border-box} html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#414141} html{height:100dvh} body{height:100dvh}
-    #unity-container,#unity-canvas{position:absolute;inset:0;width:100%;height:100%;display:block} #unity-container{overflow:hidden}
+    *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#414141}html,body{height:100dvh}
+    #unity-container,#unity-canvas{position:absolute;inset:0;width:100%;height:100%;display:block}#unity-container{overflow:hidden}
     #unity-canvas{background:#151515;outline:0;touch-action:none}
-    #web-start{position:fixed;inset:0;z-index:60;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#02041b;color:#f49812;font-family:Arial,sans-serif;text-align:center}
+    #web-start{position:fixed;inset:0;z-index:60;display:none;flex-direction:column;align-items:center;justify-content:center;background:#02041b;color:#f49812;font-family:Arial,sans-serif;text-align:center}
     #web-start h1{font-size:clamp(42px,9vw,72px);letter-spacing:4px;margin:0 0 24px}
     #web-play{padding:15px 70px;background:#f49812;color:#02041b;border:0;font-size:26px;font-weight:700;cursor:pointer}
-    #web-play:disabled{opacity:.55;cursor:default}
     #web-start p{color:#ddd}
-    #tinkle-loader{position:fixed;inset:0;z-index:70;background:#414141;display:none;flex-direction:column;align-items:center;justify-content:center;gap:22px;text-align:center;color:#f6cb68;transition:opacity .7s ease,visibility .7s ease;font-family:'Orbitron',Arial,sans-serif}
-    #tinkle-loader.visible{display:flex} #tinkle-loader.fading{opacity:0;visibility:hidden;pointer-events:none}
+    #tinkle-loader{position:fixed;inset:0;z-index:70;background:#414141;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;text-align:center;color:#f6cb68;transition:opacity .7s ease,visibility .7s ease;font-family:'Orbitron',Arial,sans-serif}
+    #tinkle-loader.fading{opacity:0;visibility:hidden;pointer-events:none}
     .tinkle-diamond{width:48px;height:48px;border:3px solid #efbd47;transform:rotate(45deg);box-shadow:0 0 18px #dca12877;animation:diamond-pulse 1.5s ease-in-out infinite;margin:0 0 12px}
     @keyframes diamond-pulse{0%,100%{opacity:.55;scale:.9}50%{opacity:1;scale:1.1}}
     .tinkle-title{font-weight:900;font-size:clamp(27px,6vw,53px);letter-spacing:.1em;background:linear-gradient(180deg,#fff2af 0%,#f6c55d 40%,#b97613 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
@@ -28,20 +28,22 @@
     #tinkle-progress{height:100%;width:0;background:linear-gradient(90deg,#b67a19,#ffdf70);transition:width .17s linear;box-shadow:0 0 12px #ffdc6d}
     #tinkle-percent{font-size:15px;letter-spacing:.15em;color:#ffcf65}
     #tinkle-status{font-family:Arial,sans-serif;font-size:13px;color:#dedede;max-width:85vw}
-    #unity-warning{position:fixed;z-index:100;top:12px;left:50%;transform:translateX(-50%);max-width:min(700px,95vw);color:white;font:14px Arial,sans-serif}
+    #retry-button{display:none;border:1px solid #d6a538;border-radius:4px;background:#352a18;color:#ffdc6d;font:700 14px Arial,sans-serif;padding:11px 24px;cursor:pointer}
+    #unity-warning{position:fixed;z-index:100;top:12px;left:50%;transform:translateX(-50%);max-width:min(700px,95vw);color:white;font:14px Arial,sans-serif;pointer-events:none}
     #unity-warning>div{padding:12px;border-radius:6px;background:#962d28;margin-bottom:6px;overflow-wrap:anywhere}
   </style>
 </head>
 <body>
   <div id="unity-container">
     <canvas id="unity-canvas" tabindex="-1"></canvas>
-    <div id="web-start"><h1>ROUNDS</h1><button id="web-play">PLAY</button><p>Ported by Tinkle v1.1.2</p></div>
+    <div id="web-start"><h1>ROUNDS</h1><button id="web-play">PLAY</button><p>Ported by zaddy</p></div>
     <div id="tinkle-loader" role="status" aria-live="polite">
       <div class="tinkle-diamond"></div>
       <div class="tinkle-title">TINKLE GAMES</div>
       <div class="tinkle-track"><div id="tinkle-progress"></div></div>
       <div id="tinkle-percent">0%</div>
       <div id="tinkle-status">Preparing game...</div>
+      <button id="retry-button" type="button">RETRY</button>
     </div>
     <div id="unity-warning"></div>
   </div>
@@ -49,15 +51,23 @@
   (() => {
     const buildUrl = 'Build';
     const canvas = document.getElementById('unity-canvas');
-    const start = document.getElementById('web-start');
-    const play = document.getElementById('web-play');
     const loader = document.getElementById('tinkle-loader');
     const bar = document.getElementById('tinkle-progress');
     const percent = document.getElementById('tinkle-percent');
     const status = document.getElementById('tinkle-status');
+    const retryButton = document.getElementById('retry-button');
     const warnings = document.getElementById('unity-warning');
     const blobUrls = [];
+    const parts = [
+      ...['aa','ab','ac','ad','ae','af'].map(s => ({name:`WebBuild.data.part-${s}`, kind:'data'})),
+      ...['aa','ab','ac','ad','ae'].map(s => ({name:`WebBuild.wasm.part-${s}`, kind:'wasm'}))
+    ];
+    const loadedParts = new Map();
     let lastProgress = 0;
+    let running = false;
+    let completed = false;
+    const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+
     function progress(value, message) {
       lastProgress = Math.max(lastProgress, Math.min(100, value));
       bar.style.width = lastProgress + '%';
@@ -71,74 +81,105 @@
       warnings.appendChild(div);
       if (type !== 'error') setTimeout(() => div.remove(), 5000);
     }
-    async function mergedBlob(baseName, suffixes, mimeType, onPart) {
-      // Promise.all preserves the declared suffix order, irrespective of download completion order.
-      let completed = 0;
-      const blobs = await Promise.all(suffixes.map(async suffix => {
-        const url = `${buildUrl}/${baseName}.part-${suffix}`;
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`Failed to download ${url} (HTTP ${response.status})`);
-        const blob = await response.blob();
-        onPart(++completed, suffixes.length);
-        return blob;
-      }));
-      const url = URL.createObjectURL(new Blob(blobs, {type:mimeType}));
+    function addCacheBust(url) {
+      const u = new URL(url, document.baseURI);
+      u.searchParams.set('_attempt', Date.now().toString());
+      return u.href;
+    }
+    async function fetchWithRetry(url, name, options = {}) {
+      const {attempts = 12, timeout = 35000, responseType = 'blob'} = options;
+      for (let attempt = 1; attempt <= attempts; attempt++) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeout);
+        try {
+          // Query strings prevent a temporarily cached CDN error from blocking later tries.
+          const response = await fetch(attempt === 1 ? new URL(url, document.baseURI).href : addCacheBust(url),
+            {signal:controller.signal, cache: attempt === 1 ? 'default' : 'no-store'});
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const result = responseType === 'blob' ? await response.blob() : await response.text();
+          if (responseType === 'blob' && !result.size) throw new Error('Empty download');
+          return result;
+        } catch (error) {
+          if (attempt === attempts) throw new Error(`${name}: ${error.message} after ${attempts} attempts`);
+          console.warn(`Retrying ${name} (${attempt}/${attempts})`, error);
+          status.textContent = `Retrying ${name} (${attempt}/${attempts})...`;
+          // Capped backoff with jitter to avoid hammering a CDN when it is down.
+          await delay(Math.min(8000, 700 * Math.pow(1.6, attempt - 1)) + Math.random() * 400);
+        } finally {
+          clearTimeout(timeoutId);
+        }
+      }
+    }
+    async function fetchPart(part) {
+      if (loadedParts.has(part.name)) return loadedParts.get(part.name);
+      const blob = await fetchWithRetry(`${buildUrl}/${part.name}`, part.name);
+      loadedParts.set(part.name, blob);
+      progress((loadedParts.size / parts.length) * 65, `Downloading files (${loadedParts.size}/${parts.length})...`);
+      return blob;
+    }
+    function makeMergedUrl(kind, mime) {
+      const blobs = parts.filter(part => part.kind === kind).map(part => loadedParts.get(part.name));
+      if (blobs.some(x => !x)) throw new Error(`Missing ${kind} chunks`);
+      const url = URL.createObjectURL(new Blob(blobs, {type:mime}));
       blobUrls.push(url);
       return url;
     }
     const config = {
-      dataUrl: '',
-      frameworkUrl: `${buildUrl}/WebBuild.framework.js`,
-      codeUrl: '',
-      streamingAssetsUrl: 'StreamingAssets',
-      companyName: 'Landfall Games',
-      productName: 'ROUNDS',
-      productVersion: '1.1.2',
-      showBanner: warning
+      dataUrl: '', frameworkUrl: `${buildUrl}/WebBuild.framework.js`, codeUrl: '',
+      streamingAssetsUrl: 'StreamingAssets', companyName: 'Landfall Games',
+      productName: 'ROUNDS', productVersion: '1.1.2', showBanner: warning
     };
+    async function loadUnityLoader() {
+      // Retrying script text rather than adding another <script> lets a failed loader request recover.
+      const source = await fetchWithRetry(`${buildUrl}/WebBuild.loader.js`, 'Unity loader', {responseType:'text'});
+      const tag = document.createElement('script');
+      tag.textContent = `${source}\n//# sourceURL=WebBuild.loader.js`;
+      document.body.appendChild(tag);
+      if (typeof createUnityInstance !== 'function') throw new Error('Unity loader did not initialize.');
+    }
     async function startGame() {
-      play.disabled = true;
-      loader.classList.add('visible');
+      if (running || completed) return;
+      running = true;
+      retryButton.style.display = 'none';
+      warnings.textContent = '';
+      loader.style.display = 'flex';
       loader.classList.remove('fading');
-      progress(0, 'Downloading game files...');
+      progress(lastProgress, 'Downloading game files...');
       try {
-        let done = 0;
-        const onPart = () => progress((++done / 11) * 65, `Downloading split files (${done}/11)...`);
-        [config.dataUrl, config.codeUrl] = await Promise.all([
-          mergedBlob('WebBuild.data', ['aa','ab','ac','ad','ae','af'], 'application/octet-stream', onPart),
-          mergedBlob('WebBuild.wasm', ['aa','ab','ac','ad','ae'], 'application/wasm', onPart)
-        ]);
+        // Start all network requests as soon as this page executes.
+        const jobs = parts.map(fetchPart);
+        const scriptJob = typeof createUnityInstance === 'function' ? Promise.resolve() : loadUnityLoader();
+        await Promise.all([...jobs, scriptJob]);
+        config.dataUrl = makeMergedUrl('data', 'application/octet-stream');
+        config.codeUrl = makeMergedUrl('wasm', 'application/wasm');
         progress(65, 'Starting Unity...');
-        if (typeof createUnityInstance !== 'function') throw new Error('Unity loader did not initialize.');
-        const unityInstance = await createUnityInstance(canvas, config, p => progress(65 + p * 35, 'Loading ROUNDS...'));
+        await createUnityInstance(canvas, config, p => progress(65 + p * 35, 'Loading ROUNDS...'));
+        completed = true;
         progress(100, 'Ready!');
-        start.remove();
         loader.classList.add('fading');
         setTimeout(() => { loader.style.display = 'none'; }, 750);
       } catch (err) {
-        console.error(err);
-        warning(err.message || String(err));
-        status.textContent = 'Loading failed. Press RETRY to try again.';
-        loader.classList.remove('visible');
-        loader.style.display = 'none';
-        play.textContent = 'RETRY';
-        play.disabled = false;
+        console.error('Game loading failed:', err);
+        status.textContent = `Download failed: ${err.message || String(err)}`;
+        retryButton.style.display = 'inline-block';
+        // Keep successful chunks so retry requests only download missing files.
+        // Remove failed round's temporary merged object URLs before trying again.
         blobUrls.splice(0).forEach(url => URL.revokeObjectURL(url));
+        config.dataUrl = '';
+        config.codeUrl = '';
+      } finally {
+        running = false;
       }
     }
-    play.addEventListener('click', () => {
-      // Fullscreen requests require a direct user gesture, before any awaits.
+    retryButton.addEventListener('click', () => {
+      // Optional fullscreen is only possible after a user click, never on automatic load.
       if (document.fullscreenEnabled && !document.fullscreenElement) {
-        document.documentElement.requestFullscreen({ navigationUI: 'hide' }).catch(() => {});
+        document.documentElement.requestFullscreen({navigationUI:'hide'}).catch(() => {});
       }
       startGame();
     });
-    const script = document.createElement('script');
-    script.src = `${buildUrl}/WebBuild.loader.js`;
-    script.onerror = () => { warning('Failed to load Build/WebBuild.loader.js'); play.disabled = true; };
-    document.body.appendChild(script);
-    // Blob URLs stay alive while Unity runs, since engine code may refer to them after initialization.
     window.addEventListener('pagehide', () => blobUrls.forEach(url => URL.revokeObjectURL(url)));
+    startGame();
   })();
   </script>
 </body>
