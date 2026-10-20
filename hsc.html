@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<base href="https://cdn.jsdelivr.net/gh/linkawaken1979-alt/Henry-Stickmin-Collection-Autoloader@main/">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Henry Stickmin Collection</title>
+<link rel="icon" href="favicon.ico">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="stage" id="stage">
+    <div id="playerMount" class="player-mount"></div>
+    <div class="overlay" id="overlay">
+      <div class="progress" id="progress" role="progressbar" aria-label="Loading game" aria-valuemin="0" aria-valuemax="100">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      <p class="message" id="message" hidden></p>
+    </div>
+  </main>
+
+  <script src="split_swf.js"></script>
+  <script src="AIR-Runtime/air-fs.js"></script>
+  <script src="AIR-Runtime/ruffle-loader.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
