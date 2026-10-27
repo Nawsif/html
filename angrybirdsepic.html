@@ -4,7 +4,7 @@
      <base href="https://cdn.jsdelivr.net/gh/bubbls/UGS-Assets@main/angry-bird/">
     <meta charset="utf-8" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Unity Web Player | Epic</title>
+    <title>Epic</title>
     <link rel="shortcut icon" href="TemplateData/favicon.ico" />
     <link rel="stylesheet" href="TemplateData/style.css" />
   </head>
@@ -55,26 +55,28 @@
 
   let loadingDiv;
   let loadingContent;
+  const bytesLoaded = {};
+  const bytesTotal = {};
+  const formatMB = n => (n / 1048576).toFixed(1);
+  let unityProgress = 0;
+  let unityStarted = false;
+  window.updateEpicUnityProgress = p => {
+    unityStarted = true;
+    unityProgress = Math.max(unityProgress, p);
+    updateLoadingDisplay();
+  };
+  window.finishEpicLoader = () => {
+    if (loadingDiv) loadingDiv.remove();
+  };
 
   function initializeUI() {
     loadingDiv = document.createElement("div");
     loadingDiv.id = "file-merger-loading";
     loadingDiv.style.cssText = `
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: rgba(0, 0, 0, 0.9);
-      color: white;
-      padding: 30px 40px;
-      border-radius: 10px;
-      font-family: monospace;
-      font-size: 16px;
-      z-index: 10000;
-      min-width: 300px;
-      text-align: center;
+      position:fixed;inset:0;z-index:10000;background:#141414;
+      color:#f5f5f5;display:flex;align-items:center;justify-content:center;
+      font-family:Arial,Helvetica,sans-serif;transition:opacity .4s;
     `;
-
     loadingContent = document.createElement("div");
     loadingContent.id = "file-merger-content";
     loadingDiv.appendChild(loadingContent);
@@ -83,53 +85,26 @@
 
   function updateLoadingDisplay() {
     if (!loadingContent) return;
-
-    const lines = [
-      '<div style="font-size: 18px; margin-bottom: 15px;">loading...</div>',
-    ];
-
-    config.files.forEach((file) => {
-      const status = mergeStatus[file.name] || "waiting";
-      const progress = mergeProgress[file.name] || {
-        current: 0,
-        total: file.parts,
-      };
-
-      let statusText = "";
-      let color = "#888";
-
-      if (status === "merging") {
-        statusText = ` merging... ${progress.current}/${progress.total}`;
-        color = "#ffa500";
-      } else if (status === "ready") {
-        statusText = "done";
-        color = "#00ff00";
-      } else if (status === "failed") {
-        statusText = "failed";
-        color = "#ff0000";
-      } else {
-        statusText = "Waiting...";
-      }
-
-      lines.push(
-        `<div style="margin: 8px 0; color: ${color};">${file.name}: ${statusText}</div>`,
-      );
-    });
-    loadingContent.innerHTML = lines.join("");
-
-    const allDone = config.files.every(
-      (file) =>
-        mergeStatus[file.name] === "ready" ||
-        mergeStatus[file.name] === "failed",
-    );
-
-    if (allDone) {
-      setTimeout(() => {
-        loadingDiv.style.opacity = "0";
-        loadingDiv.style.transition = "opacity 0.5s";
-        setTimeout(() => loadingDiv.remove(), 500);
-      }, 1000);
-    }
+    const loaded = Object.values(bytesLoaded).reduce((a,b)=>a+b,0);
+    const total = Object.values(bytesTotal).reduce((a,b)=>a+b,0);
+    const allReady = config.files.every(f => mergeStatus[f.name] === "ready");
+    const failed = config.files.some(f => mergeStatus[f.name] === "failed");
+    const pct = unityStarted && allReady ? 100 * unityProgress :
+      total > 0 ? Math.min(100, loaded / total * 100) : 0;
+    const label = failed ? "Download failed" :
+      unityStarted && allReady ? "Starting game..." : "Downloading game...";
+    const amount = total > 0 ? `${formatMB(Math.min(loaded,total))} MB / ${formatMB(total)} MB` :
+      `${formatMB(loaded)} MB downloaded`;
+    loadingContent.innerHTML = `
+      <div style="width:min(360px,80vw);text-align:center">
+        <div style="font-size:15px;margin-bottom:18px;font-weight:500">${label}</div>
+        <div style="height:4px;background:#414141;border-radius:8px;overflow:hidden">
+          <div style="height:100%;width:${pct.toFixed(2)}%;background:#f5f5f5;transition:width .18s"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:11px;font-size:12px;color:#bcbcbc">
+          <span>${amount}</span><span>${Math.round(pct)}%</span>
+        </div>
+      </div>`;
   }
 
   function log(...args) {
@@ -184,7 +159,31 @@
           );
         }
 
-        const buffer = await response.arrayBuffer();
+        const key = `${fileName}:${i}`;
+        const expected = Number(response.headers.get("content-length")) || 0;
+        if (expected) bytesTotal[key] = expected;
+        const reader = response.body && response.body.getReader();
+        let buffer;
+        if (reader) {
+          const chunks = [];
+          let count = 0;
+          while (true) {
+            const {done, value} = await reader.read();
+            if (done) break;
+            chunks.push(value);
+            count += value.byteLength;
+            bytesLoaded[key] = count;
+            updateLoadingDisplay();
+          }
+          const combined = new Uint8Array(count);
+          let at = 0;
+          for (const chunk of chunks) { combined.set(chunk,at); at += chunk.byteLength; }
+          buffer = combined.buffer;
+        } else {
+          buffer = await response.arrayBuffer();
+          bytesLoaded[key] = buffer.byteLength;
+        }
+        bytesTotal[key] = buffer.byteLength;
         buffers.push(buffer);
 
         mergeProgress[fileName].current = i + 1;
@@ -477,17 +476,19 @@
         canvas.style.height = "600px";
       }
 
-      document.querySelector("#unity-loading-bar").style.display = "block";
+      document.querySelector("#unity-loading-bar").style.display = "none";
 
       var script = document.createElement("script");
       script.src = loaderUrl;
       script.onload = () => {
         createUnityInstance(canvas, config, (progress) => {
+          window.updateEpicUnityProgress?.(progress);
           document.querySelector("#unity-progress-bar-full").style.width =
             100 * progress + "%";
         })
           .then((unityInstance) => {
             document.querySelector("#unity-loading-bar").style.display = "none";
+            window.finishEpicLoader?.();
             document.querySelector("#unity-fullscreen-button").onclick = () => {
               unityInstance.SetFullscreen(1);
             };
