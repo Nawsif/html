@@ -4,7 +4,7 @@
      <base href="https://cdn.jsdelivr.net/gh/bubbls/UGS-Assets@main/angry-bird/">
     <meta charset="utf-8" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Epic</title>
+    <title>Unity Web Player | Epic</title>
     <link rel="shortcut icon" href="TemplateData/favicon.ico" />
     <link rel="stylesheet" href="TemplateData/style.css" />
   </head>
@@ -55,6 +55,8 @@
 
   let loadingDiv;
   let loadingContent;
+  const FIXED_TOTAL_MIB = 120.49;
+  const FIXED_TOTAL_BYTES = FIXED_TOTAL_MIB * 1048576;
   const bytesLoaded = {};
   const bytesTotal = {};
   const formatMB = n => (n / 1048576).toFixed(1);
@@ -66,7 +68,11 @@
     updateLoadingDisplay();
   };
   window.finishEpicLoader = () => {
-    if (loadingDiv) loadingDiv.remove();
+    if (loadingDiv) {
+      const bar = loadingDiv.querySelector("[data-progress-fill]");
+      if (bar) bar.style.width = "100%";
+      setTimeout(() => { loadingDiv.style.opacity = "0"; setTimeout(() => loadingDiv.remove(), 400); }, 150);
+    }
   };
 
   function initializeUI() {
@@ -79,6 +85,7 @@
     `;
     loadingContent = document.createElement("div");
     loadingContent.id = "file-merger-content";
+    loadingContent.style.cssText = "width:min(520px,90vw);";
     loadingDiv.appendChild(loadingContent);
     document.body.appendChild(loadingDiv);
   }
@@ -86,20 +93,25 @@
   function updateLoadingDisplay() {
     if (!loadingContent) return;
     const loaded = Object.values(bytesLoaded).reduce((a,b)=>a+b,0);
-    const total = Object.values(bytesTotal).reduce((a,b)=>a+b,0);
+    const total = FIXED_TOTAL_BYTES;
     const allReady = config.files.every(f => mergeStatus[f.name] === "ready");
     const failed = config.files.some(f => mergeStatus[f.name] === "failed");
-    const pct = unityStarted && allReady ? 100 * unityProgress :
-      total > 0 ? Math.min(100, loaded / total * 100) : 0;
+    const pct = unityStarted && allReady ? Math.min(99.9, 99.9 * unityProgress) :
+      Math.min(99.9, loaded / total * 100);
     const label = failed ? "Download failed" :
-      unityStarted && allReady ? "Starting game..." : "Downloading game...";
-    const amount = total > 0 ? `${formatMB(Math.min(loaded,total))} MB / ${formatMB(total)} MB` :
-      `${formatMB(loaded)} MB downloaded`;
-    loadingContent.innerHTML = `
-      <div style="width:min(360px,80vw);text-align:center">
+      allReady ? "Starting game..." : "Downloading game...";
+    const amount = `${(Math.min(loaded,total) / 1048576).toFixed(2)} MiB / ${FIXED_TOTAL_MIB.toFixed(2)} MiB`;
+    let progressPanel = loadingContent.querySelector("#epic-progress-panel");
+    if (!progressPanel) {
+      progressPanel = document.createElement("div");
+      progressPanel.id = "epic-progress-panel";
+      loadingContent.prepend(progressPanel);
+    }
+    progressPanel.innerHTML = `
+      <div style="width:100%;text-align:center">
         <div style="font-size:15px;margin-bottom:18px;font-weight:500">${label}</div>
         <div style="height:4px;background:#414141;border-radius:8px;overflow:hidden">
-          <div style="height:100%;width:${pct.toFixed(2)}%;background:#f5f5f5;transition:width .18s"></div>
+          <div data-progress-fill style="height:100%;width:${pct.toFixed(2)}%;background:#f5f5f5;transition:width .18s"></div>
         </div>
         <div style="display:flex;justify-content:space-between;margin-top:11px;font-size:12px;color:#bcbcbc">
           <span>${amount}</span><span>${Math.round(pct)}%</span>
@@ -427,7 +439,7 @@
         frameworkUrl: buildUrl + "/EpicWeb.framework.js",
         codeUrl: buildUrl + "/EpicWeb.wasm",
         streamingAssetsUrl:
-          "https://cdn.jsdelivr.net/gh/bubbls/UGS-Assets@main/StreamingAssets",
+          "https://cdn.jsdelivr.net/gh/bubbls/UGS-Assets@main/angry-bird/StreamingAssets",
         companyName: "Rovio Entertainment Ltd.",
         productName: "Epic",
         productVersion: "3.0.1",
