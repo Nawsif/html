@@ -1,0 +1,1881 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+  <!-- Custom PreHead code is injected here -->
+  
+
+  <head>
+    <base href="https://cdn.jsdelivr.net/gh/nawsif/hhh2@7a27ffe5f5141f20a48520ba1716f6a83d297d03/">
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0" />
+
+    <!-- Builtin injector for disabling cache -->
+    
+
+    <title>The Happy Hills Homicide 2</title>
+
+    <!-- Custom PreStyle code is injected here -->
+    
+
+    <style>
+      @-webkit-keyframes rotation {
+        from {
+          -webkit-transform: rotate(0deg);
+        }
+
+        to {
+          -webkit-transform: rotate(360deg);
+        }
+      }
+
+      @-moz-keyframes rotation {
+        from {
+          -moz-transform: rotate(0deg);
+        }
+
+        to {
+          -moz-transform: rotate(360deg);
+        }
+      }
+
+      @-o-keyframes rotation {
+        from {
+          -o-transform: rotate(0deg);
+        }
+
+        to {
+          -o-transform: rotate(360deg);
+        }
+      }
+
+      @keyframes rotation {
+        from {
+          transform: rotate(0deg);
+        }
+
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      html {
+        background: #060612;
+      }
+
+      body {
+        font-family: arial;
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        min-height: -webkit-fill-available;
+        min-height: fill-available;
+        min-height: 100svh; /* Otherwise contents can be covered by an address bar in Safari on iOS 15 */
+        min-width: 100vw;
+        background:radial-gradient( 56.63% 56.63% at 50% 43.37%, #1c1726 0%, #060612 100%);
+        display: flex;
+        flex-direction: column;
+        overflow-x: hidden;
+        place-items: center;
+      }
+
+      body.scrollingDisabled {
+        overflow: hidden;
+      }
+
+      .emscripten {
+        padding-right: 0;
+        display: block;
+      }
+
+      div.emscripten {
+        text-align: center;
+      }
+
+      /* the canvas *must not* have any border or padding, or mouse coords will be wrong */
+      canvas.emscripten {
+        display: none;
+        border: 0px none;
+        background-color: black;
+        position: relative;
+        transition: opacity 5s ease-in;
+		-webkit-transition: opacity 5s ease-in;
+        opacity: 0;
+        filter: blur(0) grayscale(0);
+        margin-top: auto;
+        margin-bottom: auto;
+        image-rendering: optimizeQuality;           /* Older versions of FF          */
+        image-rendering: auto;                      /* Awesome future-browsers       */
+        -ms-interpolation-mode: bicubic;            /* IE                            */        
+      }
+
+      canvas.active {
+        animation-name: fadeIn;
+        animation-duration: 2s;
+        opacity: 1;
+      }
+
+      canvas.paused {
+        animation-name: blur;
+        animation-duration: 0.5s;
+        filter: blur(2px) grayscale(1);
+      }
+
+      canvas.unpaused {
+        animation-name: none;
+      }
+
+      canvas.animatedSizeTransitions {
+        transition: width 0.3s ease, height 0.3s ease;
+      }
+
+      @keyframes fadeIn {
+        0% {
+          opacity: 0;
+        }
+
+        100% {
+          opacity: 1;
+        }
+      }
+
+      @keyframes blur {
+        0% {
+          filter: blur(0) grayscale(0);
+        }
+
+        100% {
+          filter: blur(2px) grayscale(1);
+        }
+      }
+
+      .spinner {
+        height: 30px;
+        width: 30px;
+
+        -webkit-animation: rotation 0.8s linear infinite;
+        -moz-animation: rotation 0.8s linear infinite;
+        -o-animation: rotation 0.8s linear infinite;
+        animation: rotation 0.8s linear infinite;
+
+        border: 5px solid #bdff00;
+        border-top: 5px solid #719900;
+        border-radius: 100%;
+      }
+
+      .floating-control {
+        position: absolute;
+        display: none;
+        border: none;
+
+        left: 0px;
+        top: 0px;
+        width: 400px;
+        height: 100%;
+        padding: 10px;
+
+        font-family: monospace;
+        font-size: 8;
+        color: white;
+        background: rgba(53, 18, 84, 0.8);
+        box-shadow: rgb(9 8 13 / 20%) -2px 2px 4px, rgb(9 8 13 / 40%) -4px 4px 16px;
+      }
+
+      #status {
+        display: inline-block;
+        vertical-align: top;
+        font-weight: bold;
+        color: white;
+      }
+
+      #progress {
+        width: 250px;
+        height: 10px;
+        -webkit-appearance: none;
+        appearance: none;
+        padding: 5px;
+      }
+
+      /* Determines the style of the background of the progress bar */
+      progress[value]::-webkit-progress-bar {
+        background-color: #8492a6;
+        height: 10px;
+        border-radius: 15px;
+      }
+      /* Determines the style of the completed part of the progress bar */
+      progress[value]::-webkit-progress-value {
+        background-image: -webkit-linear-gradient(left, #719900, #bdff00);
+        height: 10px;
+        border-radius: 15px;
+      }
+
+      div.loading {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        pointer-events: none;
+      }
+      div.loading > * {
+        padding: 10px;
+        margin: 10px;
+      }
+
+      .output-container {
+        text-align: center;
+        margin-top: auto;
+      }
+      .output-button {
+        border: none;
+        width: 200px;
+        height: 25px;
+        margin: 5px;
+        border-radius: 5px;
+        cursor: pointer;
+        background-color: black;
+        color: #20c20e;
+        font-family: "Lucida Console", Monaco, monospace;
+      }
+
+      #output {
+        display: none;
+        height: 200px;
+        background-color: black;
+        color: white;
+        font-family: "Lucida Console", Monaco, monospace;
+        outline: none;
+        border: none;
+        padding: 0;
+        width: 100%;
+      }
+
+      #message-container {
+        display: none;
+        min-height: 50px;
+        background-color: rgba(20, 20, 20, 0.5);
+        outline: none;
+        border: none;
+        padding: 0;
+        width: 100%;
+        position: absolute;
+        top: 0;
+      }
+
+      #messages {
+        margin-left: 50px;
+        color: white;
+        font-family: "Lucida Console", Monaco, monospace;
+        outline: none;
+        border: none;
+        padding: 0;
+      }
+
+      img.qrCode {
+         opacity: 1.0;
+         width: 50%;
+         height: 50%;
+      }
+
+      #pauseMenuContainer {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      #pauseMenuContainer[hidden] {
+        display: none !important;
+        opacity: 0;
+      }
+
+      #pauseMenuBorder {
+        background: linear-gradient(135deg, #FA1E4E, transparent 40%);
+        padding: 1px;
+        border-radius: 4px;
+        clip-path: polygon(10.5px 0, 100% 0, 100% 100%, 0 100%, 0 10.5px);
+        width: 70vw;
+        max-width: 400px;
+      }
+
+      #pauseMenu {
+        display: flex;
+        flex-direction: column;
+        padding: 60px 30px 60px 30px;
+        background: linear-gradient(180deg, #2E273F 16.15%, rgba(46, 39, 63, 0.79) 56.25%, #2E273F 91.15%);
+        border-radius: 4px;
+        clip-path: polygon(10px 0, 100% 0, 100% 100%, 0 100%, 0 10px);
+        animation-name: fadeIn;
+        animation-duration: 0.5s;
+        opacity: 1;
+      }
+
+      #pauseMenu button {
+        font-weight: 500;
+        font-size: 17px;
+        color: white;
+        background: #FA1E4E;
+        border: 1px solid #FA1E4E;
+        border-radius: 6px;
+        padding: 12px 24px;
+        margin: 5px 0;
+        -webkit-user-select: none;
+        user-select: none;
+      }
+
+      #pauseMenu button#quitButton {
+        background: #FA1E4E40;
+      }
+
+      #pauseMenu button:hover {
+        filter: brightness(1.15);
+      }
+
+      #pauseMenu button:active {
+        filter: brightness(0.85);
+      }
+
+      #pauseMenu button[hidden] {
+        display: none;
+      }
+
+      .graph .labels.x-labels {
+        background-color: white;
+        text-anchor: middle;
+      }
+
+      .graph .labels.y-labels {
+        text-anchor: end;
+      }
+
+      .graph {
+        font-family: Averta, -apple-system, "Segoe UI", system-ui, sans-serif;
+        font-feature-settings: "tnum", "lnum";
+        font-style: normal;
+        font-size: 14px;
+        font-weight: 600;
+        line-height: 21px;
+        text-decoration-line: none;
+        letter-spacing: 0.25px;
+        background-color: transparent;
+        fill: #ccc;
+      }
+
+      .graph .grid {
+        stroke: #ccc;
+        stroke-dasharray: 0;
+        stroke-width: 1;
+      }
+
+      .labels {
+        font-size: 4px;
+      }
+
+      .label-title {
+        font-weight: bold;
+        text-transform: uppercase;
+        font-size: 4px;
+      }
+
+      .peer0 {
+        fill: #fa1f4e;
+        stroke: #fa1f4e;
+      }
+      .peer1 {
+        fill: #a970ff;
+        stroke: #a970ff;
+      }
+      .peer2 {
+        fill: #4574ee;
+        stroke: #4574ee;
+      }
+      .peer3 {
+        fill: #c3ff6f;
+        stroke: #c3ff6f;
+      }
+
+      .peer {
+        stroke-width: 0;
+      }
+
+      .peer-frame-delay {
+        fill: none;
+        stroke-width: 1;
+      }
+
+      .acceptable-rollback-button {
+        border: none;
+        width: 50px;
+        height: 25px;
+        margin: 5px;
+        border-radius: 5px;
+        cursor: pointer;
+        background-color: black;
+        color: #20c20e;
+        font-family: "Lucida Console", Monaco, monospace;
+      }
+
+      .peer-acceptable-rollback {
+        fill: none;
+        stroke-width: 1;
+        opacity: 0.3;
+      }
+
+      .relay-rtt {
+        stroke-width: 2;
+      }
+    </style>
+
+    <!-- Custom PostStyle code is injected here -->
+    
+
+    <!-- Builtin injector for injecting flurry analytics code -->
+    
+  </head>
+
+  <!-- Custom PostHead code is injected here -->
+  
+
+  <!-- Custom PreBody code is injected here -->
+  
+
+  <body>
+
+    <!-- Custom BodyStart code is injected here -->
+    
+
+    <!-- Custom PreCanvas code is injected here -->
+    
+
+    <canvas
+      class="emscripten"
+      id="canvas"
+      oncontextmenu="event.preventDefault()"
+      tabindex="-1"
+    >    
+    </canvas>
+
+    <!-- Custom PostCanvas code is injected here -->
+    
+
+    <div id="pauseMenuContainer" hidden>
+      <div id="pauseMenuBorder">
+        <div id="pauseMenu">
+          <button id="resumeButton" onclick="resume()">
+            Resume
+          </button>
+          <button id="quitButton" onclick="quitIfSupported()">
+            Quit
+          </button>
+        </div>
+        </div>
+    </div>
+    <div class="loading">
+      <div class="spinner" id="spinner"></div>
+      <div class="emscripten" id="status">Downloading...</div>
+
+      <progress value="0" max="100" id="progress" hidden="1"></progress>
+      <img id="QRCode" class="qrCode" alt="URL QR Code" hidden="1"></img>
+      <img id="QR2Code" class="qrCode" alt="URL QR2 Code" hidden="1"></img>
+    </div>
+
+    <div class="floating-control" id="multiplayer-stats-container">
+      <div class="multiplayer-stats-network" id="multiplayer-stats-network">
+        <svg version="1.2" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" class="graph" aria-labelledby="title" role="img" viewbox="-20 -10 130 140">
+          <title id="title">Network stats</title>
+          <g class="grid x-grid" id="xGrid">
+            <line x1="0" y1="100" x2="100" y2="100"></line>
+
+            <line x1="12.25" y1="99" x2="12.25" y2="101"></line>
+            <line x1="25" y1="98" x2="25" y2="102"></line>
+            <line x1="37.5" y1="99" x2="37.5" y2="101"></line>
+            <line x1="50" y1="98" x2="50" y2="102"></line>
+            <line x1="62.5" y1="99" x2="62.5" y2="101"></line>
+            <line x1="75" y1="98" x2="75" y2="102"></line>
+            <line x1="87.5" y1="99" x2="87.5" y2="101"></line>
+            <line x1="100" y1="98" x2="100" y2="102"></line>
+          </g>
+          <g class="grid y-grid" id="yGrid">
+            <line x1="0" y1="0" x2="0" y2="100"></line>
+
+            <line x1="-2" y1="0" x2="2" y2="0"></line>
+            <line x1="-1" y1="12.5" x2="1" y2="12.50"></line>
+            <line x1="-2" y1="25" x2="2" y2="25"></line>
+            <line x1="-1" y1="37.5" x2="1" y2="37.5"></line>
+            <line x1="-2" y1="50" x2="2" y2="50"></line>
+            <line x1="-1" y1="62.5" x2="1" y2="62.5"></line>
+            <line x1="-2" y1="75" x2="2" y2="75"></line>
+            <line x1="-1" y1="87.5" x2="1" y2="87.5"></line>
+          </g>
+          <g class="labels x-labels">
+            <text x="0" y="110">-8</text>
+            <text x="25" y="110">-4</text>
+            <text x="50" y="110">0</text>
+            <text x="75" y="110">4</text>
+            <text x="100" y="110">8</text>
+            <text x="50" y="115" class="label-title">Time shift</text>
+          </g>
+          <g class="labels y-labels">
+            <text x="-4" y="0" alignment-baseline="middle">16</text>
+            <text x="-4" y="25" alignment-baseline="middle">12</text>
+            <text x="-4" y="50" alignment-baseline="middle">8</text>
+            <text x="-4" y="75" alignment-baseline="middle">4</text>
+            <text x="-4" y="100" alignment-baseline="middle">0</text>
+            <text x="-10" y="50" class="label-title" alignment-baseline="middle">RTT</text>
+          </g>
+
+          <g id="stats-network-peers">
+          </g>
+
+          <g id="stats-network-peer-frame-delays">
+          </g>
+
+          <g id="stats-network-relay-rtt">
+          </g>
+        </svg>
+      </div>
+      <div>
+        <b>Acceptable rollback frames marker:</b>
+        <div>
+          <button class="acceptable-rollback-button" onclick="set_acceptable_rollback(0)">Off</button>
+          <button class="acceptable-rollback-button" onclick="set_acceptable_rollback(1)">+1</button>
+          <button class="acceptable-rollback-button" onclick="set_acceptable_rollback(2)">+2</button>
+          <button class="acceptable-rollback-button" onclick="set_acceptable_rollback(4)">+4</button>
+        </div>
+      </div>
+      <div id="multiplayer-stats">
+        [no stats available]
+      </div>
+    </div>
+    <div class="output-container" id="output-container" >
+      <!-- Custom Button code is injected here -->
+      
+
+      <button class="output-button" id="stats-button" style="visibility: hidden" onclick="toggleElement('multiplayer-stats-container')">
+        Toggle Stats
+      </button>
+      <button class="output-button" id="share-button" style="visibility: hidden" onclick="navigator.clipboard.writeText(window.shareUrl)">
+        Copy Share Url
+      </button>
+      <button class="output-button" id="log-state-button" onclick="log_next_game_state()" style="visibility: hidden">
+        Log State
+      </button>
+      <textarea id="output" rows="8"></textarea>
+    </div>
+
+    <div class="wallpaper-container" id="wallpaper-container" style="display: none">
+      <button class="output-button" onclick="toggleElement('wallpaper-config-iframe')">
+        Toggle configurator
+      </button>
+    </div>
+    <!-- The wallpaper config is displayed in an iframe to make it possible to use keyboard for entering values (it's consumed by
+        the runner in the original document). -->
+    <iframe class="floating-control" id="wallpaper-config-iframe" src="about:blank"></iframe>
+
+    <div id="message-container">
+      <div id="messages">
+      </div>
+    </div>
+
+   <script async
+     data-ad-client="ca-pub-123"
+     data-ad-frequency-hint="30s"
+     data-adbreak-test="on"
+     src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js">
+   </script>
+
+   <script>
+     window.adsbygoogle = window.adsbygoogle || [];
+     const adBreak =  adConfig = function(o) {adsbygoogle.push(o);}
+   </script>
+
+    <script id="tick-worker" type="javascript/worker">
+      let running = false;
+      let stop_called = false;
+
+      let intervalMs = 16;
+
+      onmessage = (e) => {
+        if (e.data.run) {
+          intervalMs = Math.floor(1000 / e.data.fps);
+
+          if (!running) {
+            running = true;
+            setTimeout(tick, intervalMs);
+          }
+        } else {
+          stop_called = true;
+        }
+      }
+
+      const tick = () => {
+        if (stop_called) {
+          stop_called = false;
+          running = false;
+
+          return;
+        }
+
+        const start = new Date().getTime();
+        postMessage('');
+        const end = new Date().getTime();
+
+        let next_update = start + intervalMs - end;
+        next_update = Math.max(next_update, 0);
+        setTimeout(tick, next_update);
+      }
+    </script>
+
+    <script type="text/javascript">
+      const blob = new Blob([document.querySelector('#tick-worker').textContent]);
+      const worker = new Worker(window.URL.createObjectURL(blob));
+
+      worker.onmessage = function () {
+        GM_tick(performance.now());
+      }
+
+      const isMultiplayer = function () {
+        if (typeof GM_is_multiplayer !== 'function') {
+          return false;
+        }
+
+        return GM_is_multiplayer() !== 0;
+      }
+
+      document.addEventListener('visibilitychange', function () {
+        if (!isMultiplayer()) {
+          return;
+        }
+
+        if (document.visibilityState === 'hidden') {
+          worker.postMessage({run: true, fps: 60});
+        } else {
+          worker.postMessage({run: false});
+        }
+      });
+    </script>
+
+    <script type="text/javascript">
+      const CHANGE_ASPECT_RATIO = true;
+
+      var bodyElement = document.getElementsByTagName("body")[0];
+      var statusElement = document.getElementById("status");
+      var progressElement = document.getElementById("progress");
+      var spinnerElement = document.getElementById("spinner");
+      var canvasElement = document.getElementById("canvas");
+      var outputElement = document.getElementById("output");
+      var outputContainerElement = document.getElementById("output-container");
+      var pauseMenu = document.getElementById("pauseMenuContainer");
+      var resumeButton = document.getElementById("resumeButton");
+      var quitButton = document.getElementById("quitButton");
+      canvasElement.addEventListener("click", function() { canvasElement.focus(); });
+      
+      const messageContainerElement = document.getElementById("message-container");
+      const messagesElement = document.getElementById("messages");
+      let rollbackMessages = [];
+
+      let clearRollbackMessagesTimeoutId = -1;
+      const showRollbackMessage = function (message) {
+        let messages = "";
+        rollbackMessages.push(message);
+        rollbackMessages.forEach(m => messages += "<p>" + m + "</p>");
+
+        messagesElement.innerHTML = messages;
+        messageContainerElement.style.display = 'block';
+
+        if (clearRollbackMessagesTimeoutId === -1) {
+          clearTimeout(clearRollbackMessagesTimeoutId);
+        }
+        clearRollbackMessagesTimeoutId = setTimeout(clearRollbackMessages, 5000);
+      };
+
+      const clearRollbackMessages = function () {
+        clearRollbackMessagesTimeoutId = -1;
+        rollbackMessages = [];
+        messageContainerElement.style.display = 'none';
+      };
+
+      var startingHeight, startingWidth;
+      var startingAspect;
+      var Module = {
+        preRun: [],
+        postRun: [],
+        print: (function () {
+          var element = document.getElementById("output");
+          if (element) element.value = ""; // clear browser cache
+          return function (text) {
+            if (arguments.length > 1)
+              text = Array.prototype.slice.call(arguments).join(" ");
+            // These replacements are necessary if you render to raw HTML
+            //text = text.replace(/&/g, "&amp;");
+            //text = text.replace(/</g, "&lt;");
+            //text = text.replace(/>/g, "&gt;");
+            //text = text.replace('\n', '<br>', 'g');
+            console.log(text);
+            if (text === "Entering main loop.") {
+              // It seems that this text ensures game is loaded.
+              ensureAspectRatio();
+            }
+            if (element) {
+              element.value += text + "\n";
+              element.scrollTop = element.scrollHeight; // focus on bottom
+            }
+          };
+        })(),
+        printErr: function (text) {
+          if (arguments.length > 1)
+            text = Array.prototype.slice.call(arguments).join(" ");
+          console.error(text);
+        },
+        canvas: (function () {
+          var canvas = document.getElementById("canvas");
+
+          return canvas;
+        })(),
+        setStatus: function (text) {
+          if (!Module.setStatus.last)
+            Module.setStatus.last = { time: Date.now(), text: "" };
+          if (text === Module.setStatus.last.text) return;
+          var m = text.match(/([^(]+)\((\d+(\.\d+)?)\/(\d+)\)/);
+          var now = Date.now();
+          if (m && now - Module.setStatus.last.time < 30) return; // if this is a progress update, skip it if too soon
+          Module.setStatus.last.time = now;
+          Module.setStatus.last.text = text;
+          if (m) {
+            text = m[1];
+            progressElement.value = parseInt(m[2]) * 100;
+            progressElement.max = parseInt(m[4]) * 100;
+            progressElement.hidden = false;
+            spinnerElement.hidden = false;
+          } else {
+            progressElement.value = null;
+            progressElement.max = null;
+            progressElement.hidden = true;
+
+            // If there are no status text, we are finished and can display
+            // the canvas and hide the spinner
+            if (!text) {
+              spinnerElement.style.display = "none";
+              canvasElement.style.display = "block";
+            }
+          }
+          statusElement.innerHTML = text;
+        },
+        totalDependencies: 0,
+        monitorRunDependencies: function (left) {
+          this.totalDependencies = Math.max(this.totalDependencies, left);
+          Module.setStatus(
+            left
+              ? "Preparing... (" +
+                  (this.totalDependencies - left) +
+                  "/" +
+                  this.totalDependencies +
+                  ")"
+              : "All downloads complete."
+          );
+        },
+      };
+      Module.setStatus("Downloading...");
+      window.onerror = function (event) {
+        // TODO: do not warn on ok events like simulating an infinite loop or exitStatus
+        Module.setStatus("Exception thrown, see JavaScript console");
+        spinnerElement.style.display = "none";
+        Module.setStatus = function (text) {
+          if (text) Module.printErr("[post-exception status] " + text);
+        };
+      };
+
+      // Route URL GET parameters to argc+argv
+      if (typeof window === "object") {
+        Module['arguments'] = window.location.search.substr(1).trim().split('&');
+        // If no args were passed arguments = [''], in which case kill the single empty string.
+        if (!Module['arguments'][0]) {
+          Module['arguments'] = [];
+        }
+      }
+
+      // add in the script code
+      
+
+      function toggleElement(id) {
+        var elem = document.getElementById(id);
+        if (elem) {
+          elem.style.display = elem.style.display == 'block' ? 'none' : 'block';
+        }
+      }
+
+      var g_pWadLoadCallback = undefined;
+      function setWadLoadCallback( _wadLoadCallback ) 
+      {
+        g_pWadLoadCallback = _wadLoadCallback;
+      }
+
+      var g_pAddAsyncMethod = -1;
+
+      function setAddAsyncMethod( asyncMethod )
+      {
+        g_pAddAsyncMethod = asyncMethod;
+      }
+
+      var g_pJSExceptionHandler = undefined;
+
+      function setJSExceptionHandler( exceptionHandler )
+      {
+        if (typeof exceptionHandler == "function") {
+            g_pJSExceptionHandler = exceptionHandler;
+        } // end if
+      } // end setJSExceptionHandler
+
+      function hasJSExceptionHandler()
+      {
+        return (g_pJSExceptionHandler != undefined) && (typeof g_pJSExceptionHandler == "function");
+      } // end hasJSExceptionHandler
+
+      function doJSExceptionHandler( exceptionJSON )
+      {
+        if (typeof g_pJSExceptionHandler == "function") {
+          var exception = JSON.parse( exceptionJSON );
+          g_pJSExceptionHandler( exception );
+        } // end if
+      } // end doJSExceptionHandler
+
+      function manifestFiles()
+      {
+        return [ "runner.data",
+"runner.js",
+"runner.wasm",
+"audio-worklet.js",
+"snd_arrow.ogg",
+"snd_pain2.ogg",
+"snd_baby.ogg",
+"snd_factory.ogg",
+"snd_clown_death.ogg",
+"snd_drawbridge.ogg",
+"amb_rain.ogg",
+"snd_spotted.ogg",
+"snd_coughgroup.ogg",
+"snd_buzzer.ogg",
+"snd_blip.ogg",
+"snd_gun_empty.ogg",
+"snd_extinguisher.ogg",
+"snd_explode.ogg",
+"snd_pain1.ogg",
+"snd_behead.ogg",
+"snd_stab2.ogg",
+"amb_rural.ogg",
+"snd_stab.ogg",
+"snd_stab3.ogg",
+"snd_gunfire.ogg",
+"snd_m60.ogg",
+"msc_games.ogg",
+"snd_train_horn.ogg",
+"snd_murderparty.ogg",
+"msc_chase.ogg",
+"snd_arc_music.ogg",
+"snd_power.ogg",
+"amb_train.ogg",
+"snd_crossbow.ogg",
+"snd_sawsoft.ogg",
+"snd_burst.ogg",
+"snd_dog_sleep.ogg",
+"snd_splatter2.ogg",
+"snd_car_arrive.ogg",
+"snd_russle.ogg",
+"snd_bodyhit.ogg",
+"snd_throw.ogg",
+"snd_staticlow.ogg",
+"snd_gates.ogg",
+"snd_dog_growl.ogg",
+"snd_trip.ogg",
+"msc_dad3.ogg",
+"snd_saw.ogg",
+"msc_dad2.ogg",
+"snd_boink.ogg",
+"snd_dog.ogg",
+"msc_credits.ogg",
+"snd_husk.ogg",
+"snd_m16.ogg",
+"snd_grenade.ogg",
+"snd_western.ogg",
+"msc_dad1.ogg",
+"snd_bench.ogg",
+"snd_crowd.ogg",
+"snd_swap.ogg",
+"snd_luggage.ogg",
+"snd_wrong.ogg",
+"snd_long_scream.ogg",
+"snd_agony.ogg",
+"snd_struggle.ogg",
+"snd_rollercoaster.ogg",
+"msc_jump.ogg",
+"msc_dad4.ogg",
+"snd_snore.ogg",
+"snd_crawl.ogg",
+"game.unx",
+"snd_pipe_hit.ogg",
+"snd_drop.ogg",
+"snd_western2.ogg",
+"snd_splatter.ogg",
+"msc_club_muffled.ogg",
+"snd_smg.ogg",
+"snd_swing.ogg",
+"snd_gunshot.ogg",
+"snd_drain.ogg",
+"msc_jumpscare.ogg",
+"msc_guitar1.ogg",
+"snd_tape.ogg",
+"snd_long_scream2.ogg",
+"snd_bat.ogg",
+"snd_wood.ogg",
+"msc_guitar2.ogg",
+"snd_rico.ogg",
+"snd_siren.ogg",
+"msc_club.ogg",
+"snd_meat.ogg",
+"snd_charge.ogg",
+"snd_weld.ogg",
+"snd_punch.ogg",
+"snd_bone2.ogg",
+"snd_train_brake.ogg",
+"snd_charge2.ogg",
+"snd_cough.ogg",
+"snd_static.ogg",
+"snd_grind.ogg",
+"snd_trash.ogg",
+"snd_bone1.ogg",
+"snd_cough_short.ogg",
+"snd_gun_slide.ogg",
+"msc_jingle.ogg",
+"snd_traindoor.ogg",
+"msc_clue.ogg",
+"snd_metaldoor.ogg",
+"msc_vice.ogg",
+"snd_glass.ogg",
+"snd_scream.ogg",
+"snd_dad_angry.ogg",
+"snd_train_stop.ogg",
+"msc_jump2.ogg",
+"snd_bonk.ogg",
+"msc_highscore.ogg",
+"snd_gun_click.ogg",
+"msc_stage1.ogg",
+"snd_bottle.ogg",
+"snd_dog_pant.ogg",
+"snd_cough_short2.ogg",
+"snd_hammered.ogg",
+"msc_stage3.ogg",
+"snd_scared.ogg",
+"snd_sword_hit.ogg",
+"amb_park.ogg",
+"snd_man_die.ogg",
+"snd_ladder.ogg",
+"msc_stage2.ogg",
+"snd_lock.ogg",
+"snd_macegore.ogg",
+"snd_pistol.ogg",
+"snd_smash.ogg",
+"snd_stumble.ogg",
+"snd_bite.ogg",
+"snd_muffled.ogg",
+"msc_gunshow.ogg",
+"snd_sawing.ogg",
+"msc_menu.ogg",
+"msc_copperbolt.ogg",
+"snd_angry.ogg",
+"snd_dog_bark.ogg",
+"snd_alarm.ogg",
+"snd_cut.ogg",
+"snd_grunt.ogg",
+"snd_big_die.ogg",
+"snd_dragon.ogg",
+"snd_sword.ogg",
+"snd_drill.ogg",
+"msc_stage4.ogg",
+"snd_jump.ogg",
+"snd_wake.ogg",
+"snd_metalup.ogg",
+"snd_zap.ogg" ].join( ";");
+      }
+
+      function manifestFilesMD5()
+      {
+        return [ "2a374ef8eadd5d8e5dbb3fc2caa0bd79",
+"7eb285d8ddb936cebc7b03e69bf13d75",
+"6344cea96b6757c3753745b7ebf72d7d",
+"e8f1e8db8cf996f8715a6f2164c2e44e",
+"ac97ba7571cf96c56dab6525f374195b",
+"ad51797605596ed676a9dfd380f885a7",
+"96ebed73cc1554594b94fd3de7d95e4c",
+"4628a09577ec891d50fe268018846d91",
+"3aee22fff61b922e0b04a6c3e462a9b3",
+"1ad707713eef8db665b737f2da463037",
+"a1ddfdfbcf6349b4ad3e9269640efaac",
+"bdbeb2d3789010828a6c106246d29923",
+"02c4eb0c307f6d38889b75cddee49c8a",
+"6ad5604755f5950b54bbfd545f51d4cf",
+"4fdc5ecf4f53b658fd893fb012f90e95",
+"fb6e27e5ab5929413a7f167aad0d0236",
+"49fb4f7c07be25f8be757a1db34c99bf",
+"1251b042c47c0b546018d8133937b692",
+"5d9b87eb0df89c8390792e6a5eaed871",
+"33e8bb1a3575dce921bd0c7f3e209361",
+"142a9dd0c14aedb5ad0c38a6faf9f7fa",
+"721b4f51a3fe5be847f26934ea95fd56",
+"7adc17a9f85362f41b2ee7cd673bbde4",
+"46953c3c245faf25774bd393fb6b333e",
+"e7527a60b69928ef278342de326dc24f",
+"898be27152a84a54d946a80174b926d1",
+"044f236f555df0ace95ef810da367036",
+"5eed0be2fdea9c1408cc93ff4dd4692f",
+"4538a2ccbecd679cea0e50f69ff9543d",
+"19560e8ee046acca78af3c8a21c6e51a",
+"813022a172549511508d23e621e64074",
+"9f09d38186374442197444faa40bf793",
+"4cda60e99fdbe01be02ff85a9f755772",
+"405887efc0d0baa8efd7064227dae734",
+"87dee671b8dd05ffdf68486d4d185094",
+"edc7f8c7360481550085518e3ced3399",
+"57ee650852e5cb110dfa0cc3dc477a93",
+"c38eaaabeb01cb15b559e29ab2b80a7f",
+"4de2e2f55fa323a3f80d4526ab32fcc5",
+"04b5d756efce20f1dd803b7732f454b5",
+"65f21bf09fa7c18275b5fabac9c05170",
+"d18b5b2c773273c181d94ff9f8d4c3cb",
+"4142900ec95743fdefb38fbab821b13b",
+"753452dd6b9c4031f380f0d820d29f53",
+"b582d5c953a29134dedcaf936d5dc888",
+"228f918380ea83a13d120e7f1e03889e",
+"fcf2445ea4041584cbeb8b30e3d671a2",
+"78f8222105c8eb580b61eafd75174e62",
+"dd4e6f2c03b523c3b9831bc30096c9e7",
+"243f15aa65c352888720d25d09ddc3c3",
+"50fd3598f6067424ec04096924f3b661",
+"c4d2d5271218212b7791c6b7615d172d",
+"fc1dd89c956eb20d50eb207e84b86d5a",
+"455ad51c4ee1beeb3b6dfcb202e20d86",
+"caaa8c56e6b79b60e138abea4a8a9b6a",
+"208a6dc0e229f4b57dee18c203058b85",
+"9e39cbe590fab171a8709d06b697cee7",
+"f7d050e85626042b1e9e2c60ae00f153",
+"a13d1bc24ad5241a4b595e60ec0f47ee",
+"1c57ce46d629fac75a21f5c1de335666",
+"eaaf8fc3efd9a4e2c23d6290acad536e",
+"a24a1e364a1eed86d0bb13fcc9d87a50",
+"6f85cbf6e027ac90c70122835bf44f17",
+"09ade9df6d16256eacc6269c6619f16f",
+"31a8dd1e52c6a469df6cf9820036f532",
+"ec76b2e7ae55616e55366b7e0ad5f26d",
+"bba9f96a05ae385cb6484fa58dac09f6",
+"52d193b2d2806047b910e7a7481e55b7",
+"581ad34fcf238b7b5f37cc66da4489df",
+"d9d05ebedd63d0f1d5bc6d2dcbb40eea",
+"6ecc3d4023d37e38dfe9d38dcfbd2c33",
+"7811690fad8bc704891e74cf5e672831",
+"51dded2d7a6e73485b02ee7afa410e91",
+"b1c12f439aab34ba5c9bafdb11d82403",
+"eeb5249886504d16c0a9c5eb26750a67",
+"b3ebd479499d4dffb23728f3dcd95662",
+"c1e73d48bfea7f85539f2b2f8af5b64d",
+"05dca3a1ee2d7e2f359d69bedddd84ec",
+"41d9eefc38d034880fcd987e383e90f0",
+"0196e884f1662cd0a99596b1c230085a",
+"60f042857bfdc0b71aee1d3c58c28c24",
+"6640b979dbff861f29f5b6719bd63dae",
+"cde53dcde4c9474cf98fb5bfe139c9ba",
+"e115bdf860b7364487b1af8ec755374c",
+"5c77726aaaa9832c799e6fda4b5f6019",
+"367a3578159f4d2fda3f4a48616741b4",
+"d71e436ef31849abd45a0626598aff4a",
+"ea8c2a6a74eb349d86e6a5a467e7869f",
+"44700d44ff78747609b0b4142925a463",
+"e7fff6217fed0ca18a057eda55df7690",
+"23560ac33e195a48ea615a6bef05ff7a",
+"eb5b6f7f7f695c35315b6483ed37880a",
+"7503bfbc783df6e6e9bf9179c96a2ade",
+"16ee7d90e99be67a471ae27d49979b7f",
+"b885011931ae13c951ef265128209e96",
+"ab7d1db10b846e2649a05eab729e13a3",
+"8a7528c0275f736c0dee6243651dd297",
+"37fe5c653e6b089f3d69ea7b1a5c6db2",
+"42a7d8814b2755c47aaf3475f5d764e5",
+"7a14d095dbfec3263107ffd74e99b86c",
+"622eb953cea818c1ee3066e44196cff4",
+"b7b71576c0ff3c77b365bb426b3b5ca6",
+"1389b5565addc66e735b70f2d3a3b98c",
+"f6499c6f41cc677390a80039a118a3ac",
+"530067b6db21504ce2a80d5b53ec44d9",
+"293e6fc9aaeccfb6016e8a6c40e69770",
+"057a474c470f42d1e57ed35d7b5169d7",
+"8eab48e2f72520f505359e64f85f4f06",
+"84666b8c0cd1662191f9d87ecc1e1e5b",
+"c89874507533a1062e37366847ecec61",
+"20e0e7ab80d81004a0919f599bcd9671",
+"3161361e2eb6ca24f664ea6004807a00",
+"517e930099dc8f3113b317215cced160",
+"22b81b243d1f46c4629915c05feb59da",
+"0171a6eccfe3b07456223749d5029b97",
+"44504904526a5a0a7a468bd4ffd12cec",
+"032d59a3f0540191f71144c73c519ac2",
+"113a49d91627953cc524c90c29275344",
+"658c77efdd94e03f38d507a8670b9185",
+"1dd06652586b3d57809796e169e11928",
+"4c1ca97ff1d81d8c339014aae69135eb",
+"ed781876849165261d739e6d9e55d3ff",
+"7cc2dcda97248ee087e9babcaac4f868",
+"cf076ead653c3d71843e4518f2d44f2e",
+"5d762985837896fa90a2ebbf1c29022d",
+"2fe9a4baffd34ee05b3606352767b0d1",
+"af238df5750cd5cb59809e8b7247c6ab",
+"212840c8988c5240b943834fb3a1df29",
+"80ef68319f20695319f465c42333a9ed",
+"1c5b009928715dd370821546adbc1e21",
+"9b3eaa1dc1727a04dce5e30f632d0110",
+"c615d362d9c8327b5cdf67be5492e671",
+"696bd63f080c72f356479c0ea17835cf",
+"26c8e3899f324dd160edc46d2f89d5ba",
+"b7276fa1259dd570ffa0396b1ca62e72",
+"ad752a26602ad2d05dde89c167b85c2c",
+"0eab5966b2791d4dfe861fefeaf99962",
+"f09b75f3891a4aa33fd47bb692bafa9d",
+"63ae86c8fd994020fe8e5dcdf6ca5412",
+"cb9f57a4639e45e4e7571c12f0ebac87",
+"c6b4ddaa3c55fe53eda2de4d2fe8b6a9",
+"b627d3a8f622f2ec7b189a0d0e745910",
+"3af6d4616961095d154c6ec565135278",
+"494e3a888e165a287b1633222e751d96",
+"f676ad43d97abdfd884f6a06a22774e5",
+"60f812c385107986841f2eff0fcad0f3",
+"9a78d42aba71b2d27962d0b5ca801c78",
+"52ce5f091d55f7c355ad64691225a507",
+"3e3a95c1af98e93ccba3ef4aa8d4041b",
+"a1cacfd1b5e572b918d9ce66dab46ec0",
+"0f9ee1481b953a5b4b2a0a3001a3b050",
+"6b05e41cf0561ca4ce6c4021adde75cf",
+"105c3b8dc137bf098f6058e4f72a6b6f",
+"18ff951e84b599fa56d3fe5955ac4402" ];
+      }
+
+      function onFirstFrameRendered()
+      {
+          //console.log("First frame rendered!");
+      }
+
+      function onGameSetWindowSize(width,height)
+      {
+          console.log("Window size set to width: " + width + ", height: " + height);
+
+          startingHeight = height;
+          startingWidth = width;
+          startingAspect = startingWidth / startingHeight;
+          ensureAspectRatio();
+      }
+
+    function triggerAd(adId, _callback_beforeAd, _callback_afterAd, _callback_adDismissed, _callback_adViewed, _callback_adbreakDone) {
+       // need to take a copy of the RValues represented
+       var pRValueCopy = triggerAdPrefix( _callback_beforeAd, _callback_afterAd, _callback_adDismissed, _callback_adViewed, _callback_adbreakDone );
+       var pCallbackBeforeAd = pRValueCopy + (0*16);
+       var pCallbackAfterAd = pRValueCopy + (1*16);
+       var pCallbackAdDismissed = pRValueCopy + (2*16);
+       var pCallbackAdViewed = pRValueCopy + (3*16);
+       var pCallbackAdBreakDone = pRValueCopy + (4*16);
+
+       adBreak({
+         "type": "reward",                    // The type of this placement
+         "name": adId,                        // A descriptive name for this placement
+
+         "beforeAd": () => {                  // Prepare for the ad. Mute and pause the game flow
+           console.log("beforeAd");
+           // trigger _callback_beforeAd to game
+           doGMLCallback( pCallbackBeforeAd, { id:adId } );
+         },
+         "afterAd" : () => {                   // Resume the game and re-enable sound
+           console.log("afterAd");
+           // trigger _callback_afterAd to game
+           doGMLCallback( pCallbackAfterAd, { id:adId } );
+         },
+         "beforeReward": (showAdFn) => {      // Show reward prompt (call showAdFn() if clicked)
+           console.log("beforeReward");
+           showAdFn();
+           // Setup native prompt to indicate ad will load
+           // Will not be setup by dev so this UX controlled by GXC
+         },
+         "adDismissed": () => {               // Player dismissed the ad before it finished
+           console.log("adDismissed");
+           // trigger _callback_adDismissed to game
+           doGMLCallback( pCallbackAdDismissed, { id:adId } );
+         },
+         "adViewed": () => {                  // Player watched the ad–give them the reward.
+           console.log("adViewed");
+           // trigger _callback_adViewed to game
+           doGMLCallback( pCallbackAdViewed, { id:adId } );
+         },
+         "adBreakDone": (placementInfo) => {  // Always called (if provided) even if an ad didn't show
+           console.log("adBreakDone");
+           // trigger _callback_adBreakDone to game
+           doGMLCallback( pCallbackAdBreakDone, { id:adId } );
+           triggerAdPostfix( pRValueCopy );
+         }, 
+       });
+      }
+
+      function triggerPayment(itemId, _callback_PaymentComplete) {
+        var pRValueCopy = triggerPaymentPrefix(_callback_PaymentComplete);
+        setTimeout(() => {
+          console.log("triggerPayment");
+          doGMLCallback(pRValueCopy, { id:itemId });        
+        }, 1000);
+        triggerPaymentPostfix();
+      }
+
+      function ensureAspectRatio() {
+        if (canvasElement === undefined) {
+          return;
+        }
+
+        if (!CHANGE_ASPECT_RATIO) {
+          return;
+        }
+        
+        if (startingHeight === undefined && startingWidth === undefined) {
+          return;
+        }
+
+        canvasElement.classList.add("active");
+
+        const maxWidth = window.innerWidth;
+        const maxHeight = window.innerHeight;
+        var newHeight, newWidth;
+
+        // Find the limiting dimension.
+        var heightQuotient = startingHeight / maxHeight;
+        var widthQuotient = startingWidth / maxWidth;
+
+        if (heightQuotient > widthQuotient) {
+          // Max out on height.
+          newHeight = maxHeight;
+          newWidth = newHeight * startingAspect;
+        } else {
+          // Max out on width.
+          newWidth = maxWidth;
+          newHeight = newWidth / startingAspect;
+        }
+
+        canvasElement.style.height = newHeight + "px";
+        canvasElement.style.width = newWidth + "px";
+      }
+
+      function pause() { // Don't change the name - GX Mobile calls it when the app becomes inactive.
+        if (!canvasElement.classList.contains("active")) { // Wait for the canvas to load.
+          return
+        }
+        
+        GM_pause();
+        pauseMenu.hidden = false;
+        canvasElement.classList.add("paused");
+      }
+
+      function resume() {
+        GM_unpause();
+        pauseMenu.hidden = true;
+        canvasElement.classList.remove("paused");
+        canvasElement.classList.add("unpaused");
+        enterFullscreenIfSupported();
+        lockOrientationIfSupported();
+      }
+
+      function quitIfSupported() {
+        if (window.oprt && window.oprt.closeTab) { /* GX Mobile API */
+          window.oprt.closeTab();
+        } else if (window.chrome && window.chrome.runtime && window.chrome.runtime.sendMessage) {
+          window.chrome.runtime.sendMessage('mpojjmidmnpcpopbebmecmjdkdbgdeke', { command: 'closeTab' })
+        }
+      }
+
+      function enterFullscreenIfSupported() {
+        if (!window.oprt || !window.oprt.enterFullscreen) { /* GX Mobile API */
+          return;
+        }
+
+        window.oprt.enterFullscreen();
+        let viewStatus = GM_get_view_status();
+        viewStatus.fullscreen = true;
+        GM_set_view_status(viewStatus);
+      }
+
+      function lockOrientationIfSupported() {
+        if (!window.oprt || !window.oprt.lockPortraitOrientation || !window.oprt.lockLandscapeOrientation) { /* GX Mobile API */
+          return;
+        }
+
+        let viewStatus = GM_get_view_status();
+        if (viewStatus.landscape === true && viewStatus.portrait === false) {
+          window.oprt.lockPortraitOrientation();
+        } else if (viewStatus.landscape === false && viewStatus.portrait === true) {
+          window.oprt.lockPortraitOrientation();
+        }
+      }
+
+      /* Observe the dimensions of body and ensureAspectRatio of the canvas (whilst taking up maximum space)
+       *
+       * NOTE(robertz):
+       *  We also need to request an Animation Frame to do this, if we do not, resizeObserver might throw error
+       *  "ResizeObserver loop limit exceeded", which means that
+       *  "[...] ResizeObserver was not able to deliver all observations within a single animation frame"
+       *  https://stackoverflow.com/a/50387233 (source).
+       *
+       *  There are different ways to solve the issue, since the error is benign (meaning it wont crash anything)
+       *  we could choose to ignore it via changing the window.onerror method, i.e
+       *  ```
+       *  window.onerror((event)=> {
+       *    if(event==="ResizeObserver loop limit exceeded") {
+       *       return
+       *    }
+       *     ///...rest
+       *  }
+       *  ```
+       *  But for now we request an animationFrame which seems to be the recommended way to go about it.
+       *
+       * NOTE(ddrechny):
+       *  window.innerWidth/Height value updates are sometimes delayed in WebKit on iOS after an orientation
+       *  change. Hence we're calling ensureAspectRatio one more time after a delay to minimize the risk of
+       *  sizing the canvas with outdated values.
+       */
+      const resizeObserver = new ResizeObserver(() => {
+        window.requestAnimationFrame(ensureAspectRatio);
+        setTimeout(() => window.requestAnimationFrame(ensureAspectRatio), 100);
+      });
+      resizeObserver.observe(document.body);
+
+      /* NOTE(ddrechny):
+       *  Body needs to be scrollable on desktop browsers for debug buttons to be accessible.
+       *  On mobile browsers scrolling can be activated accidentally and debug buttons aren't useful,
+       *  so it's better to disable it.
+       */
+      if (/Android|iPhone|iPod/i.test(navigator.userAgent)) {
+        bodyElement.className = "scrollingDisabled";
+        canvasElement.classList.add("animatedSizeTransitions");
+        outputContainerElement.hidden = true;
+      }
+
+      document.addEventListener("visibilitychange", (event) => {
+        if (document.visibilityState != "visible") {
+          pause();
+        } else if (isMultiplayer()) {
+          resume();
+        }
+      });
+
+      window.addEventListener("load", (event) => {
+        if ((!window.oprt || !window.oprt.enterFullscreen) && (!window.chrome || !window.chrome.runtime || !window.chrome.runtime.sendMessage)) {
+          quitButton.hidden = true;
+        }
+      });
+
+      setWadLoadCallback(() => {
+        enterFullscreenIfSupported();
+        lockOrientationIfSupported();
+      });
+
+      var read_ptr = 0;
+      read_int = () => {
+        var heap_slice = Module["HEAPU8"].subarray(read_ptr, read_ptr + 4);
+        var buffer = new ArrayBuffer(4);
+        var barray = new Uint8Array(buffer);
+        for (var i = 0; i < 4; i++) barray[i] = heap_slice[i];
+        var int_array = new Int32Array(buffer);
+        var int = int_array[0];
+        read_ptr += 4;
+        return int;
+      };
+
+      read_pointer = () => {
+        var ptr = Module.getValue(read_ptr, "*");
+        read_ptr += 8;
+        return ptr;
+      };
+
+      readPeer = () => {
+        var peer = {
+          peer: read_int(),
+          local_frames_ahead: read_int(),
+          rtt: read_int(),
+          remote_frame_rate: read_int(),
+          remote_frame_delay: read_int(),
+        }
+
+        return peer;
+      }
+
+      readStats = (s) => {
+        read_ptr = s;
+
+        var stats = {
+          kbps_sent: read_int(),
+          kbps_received: read_int(),
+          pps_sent: read_int(),
+          pps_received: read_int(),
+          frame_rate: read_int(),
+          rollbacks: read_int(),
+          frame_delay: read_int(),
+          skipped_frames: read_int(),
+          rejected_inputs: read_int(),
+          relay_rtt: read_int(),
+          peer: read_int(),
+          num_peers: read_int(),
+
+          serialization_stats: {
+            state_size: read_int(),
+            managed_instances_num: read_int()
+          },
+          peers: []
+        }
+
+        read_ptr = read_pointer();
+        for (var j = 0; j < stats.num_peers; ++j) {
+          stats.peers.push(readPeer());
+        }
+
+        return stats;
+
+      }
+
+      var acceptable_rollback_frames = 0;
+      var set_acceptable_rollback = (frames) => {
+        acceptable_rollback_frames = frames;
+      }
+
+      drawLocal = (peers_elem, frame_delay_elem, relay_rtt_elem, peer_name, relay_rtt, frame_delay) => {
+          drawPeer(peers_elem, frame_delay_elem, peer_name, 0, frame_delay, 0);
+
+          const per_pixel = 100/16;
+          const frames_rtt = relay_rtt/16; // To ceil, or not to ceil - that's the question.
+
+          const y = 100 - frames_rtt * per_pixel;
+
+          const relay_rtt_marker = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+          relay_rtt_marker.setAttribute('x1', -2);
+          relay_rtt_marker.setAttribute('y1', y);
+          relay_rtt_marker.setAttribute('x2', 2);
+          relay_rtt_marker.setAttribute('y2', y);
+
+          relay_rtt_marker.setAttribute('data-relay-rtt', relay_rtt);
+
+          relay_rtt_marker.classList.add(peer_name);
+          relay_rtt_marker.classList.add('relay-rtt');
+
+          relay_rtt_elem.appendChild(relay_rtt_marker);
+      }
+
+      drawPeer = (peers_elem, frame_delay_elem, peer_name, rtt, frame_delay, frames_ahead) => {
+        const per_pixel = 100/16;
+        const frames_rtt = rtt/16; // To ceil, or not to ceil - that's the question.
+        const x = 50 + frames_ahead * per_pixel;
+        const y = 100 - frames_rtt * per_pixel;
+
+        const peer = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        peer.setAttribute('cx', x);
+        peer.setAttribute('cy', y);
+        peer.setAttribute('r', 1);
+
+        peer.setAttribute('data-rtt', rtt);
+        peer.setAttribute('data-frame-delay', frame_delay);
+        peer.setAttribute('data-frames-ahead', frames_ahead);
+
+        peer.classList.add(peer_name);
+        peer.classList.add('peer');
+
+        peers_elem.appendChild(peer);
+
+        const peer_frame_delay = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        peer_frame_delay.setAttribute('cx', x);
+        peer_frame_delay.setAttribute('cy', y);
+        peer_frame_delay.setAttribute('r', frame_delay * per_pixel);
+
+        peer_frame_delay.classList.add(peer_name);
+        peer_frame_delay.classList.add('peer-frame-delay');
+
+        frame_delay_elem.appendChild(peer_frame_delay);
+
+        if (acceptable_rollback_frames > 0) {
+          const peer_acceptable_rollback = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          peer_acceptable_rollback.setAttribute('cx', x);
+          peer_acceptable_rollback.setAttribute('cy', y);
+          peer_acceptable_rollback.setAttribute('r', (frame_delay + acceptable_rollback_frames) * per_pixel);
+
+          peer_acceptable_rollback.classList.add(peer_name);
+          peer_acceptable_rollback.classList.add('peer-acceptable-rollback');
+          frame_delay_elem.appendChild(peer_acceptable_rollback);
+        }
+      }
+
+      report_stats = (stats_data) => {
+
+        var stats = readStats(stats_data);
+
+        var peers_elem = document.getElementById("stats-network-peers");
+        var frame_delay_elem = document.getElementById("stats-network-peer-frame-delays");
+        var relay_rtt_elem = document.getElementById("stats-network-relay-rtt");
+
+        peers_elem.innerHTML = '';
+        frame_delay_elem.innerHTML = '';
+        relay_rtt_elem.innerHTML = '';
+
+        stats.peers.forEach(p => {
+          drawPeer(peers_elem, frame_delay_elem, 'peer' + p.peer, p.rtt, p.remote_frame_delay, p.local_frames_ahead);
+        });
+
+        drawLocal(peers_elem, frame_delay_elem, relay_rtt_elem, 'peer' + stats.peer, stats.relay_rtt, stats.frame_delay);
+      }
+
+      let wallpaperConfig = {};
+      const wallpaperConfigKey = 'wallpaper-config';
+
+      function wallpaper_init_config_controls(definitions) {
+        const wallpaperContainer = document.getElementById("wallpaper-container");
+        wallpaperContainer.style.display = "block";
+
+        let configStyle = '<style type="text/css">' +
+          'body { color: white; font-family: Averta, -apple-system, "Segoe UI", system-ui, sans-serif; font-style: normal; font-size: 10px; }' +
+          '.config-row { display: flex; justify-content: flex-start; align-items: center; padding: .5em; }' +
+          '.config-row > label { flex: 1 }' +
+          '.config-row > input { flex: initial; }' +
+          '.config-row > textarea { flex: 1; }' +
+          '.config-row-label { font-size: 12px; font-weight: 600; }' +
+          'button { padding: 8px 16px; border-radius: 4px; background-color: unset; border-color: rgb(199, 159, 234); color: rgb(199, 159, 234); }' +
+          '</style>';
+        let configHTML = '<html><head><title></title>' + configStyle + '</head><body>' +
+          '<div class="wallpaper-header"><h1>Live Wallpaper Configurator</h1><button id="wallpaper-reset-parameters">Reset parameters</button></div>' +
+          '<div class="wallpaper-config" id="wallpaper-config"></div>' +
+          '</body></html>'
+
+        const wallpaperConfigDocument = document.getElementById("wallpaper-config-iframe").contentDocument;
+        wallpaperConfigDocument.open();
+        wallpaperConfigDocument.write(configHTML);
+        wallpaperConfigDocument.close();
+
+        const storedConfig = JSON.parse(localStorage.getItem(wallpaperConfigKey));
+        if (storedConfig) {
+          wallpaperConfig = storedConfig;
+        }
+
+        const configElement = wallpaperConfigDocument.getElementById("wallpaper-config");
+        const resetButton = wallpaperConfigDocument.getElementById("wallpaper-reset-parameters");
+        resetButton.addEventListener("click", (e) => {
+          wallpaper_reset_config();
+          wallpaperConfig = {};
+          add_config_elems(configElement, definitions);
+          notify_config_change();
+        }, false);
+
+        add_config_elems(configElement, definitions);
+        notify_config_change();
+      }
+
+      function add_config_elems(configElement, definitions) {
+        while (configElement.hasChildNodes()) {
+          configElement.removeChild(configElement.lastChild);
+        }
+
+        definitions.value
+          .map(d => create_elems(d, wallpaperConfig, ""))
+          .filter(e => e !== null && e !== undefined)
+          .map(e => configElement.appendChild(e));
+      }
+
+      function create_elems(definition, config, prefixId) {
+          if (definition.type === undefined || definition.name === undefined) {
+            console.log("missing definition name or type for: ", definition);
+            return null;
+          }
+
+          if  (definition.type === "section") {
+            return create_section_elem(definition, config, prefixId);
+          }
+
+
+          if (definition.value === undefined ) {
+            console.log("missing definition value for: ", definition);
+            return null;
+          }
+
+          if (definition.type === "range") {
+            return create_range_elem(definition, config, prefixId);
+          }
+
+          if (definition.type === "boolean") {
+            return create_checkbox_elem(definition, config, prefixId);
+          }
+
+          if (definition.type === "color" || definition.type === "colour") {
+            return create_color_elem(definition, config, prefixId);
+          }
+
+          if (definition.type === "string") {
+            return create_text_elem(definition, config, prefixId);
+          }
+
+          if (definition.type === "string_multiline") {
+            return create_multiline_text_elem(definition, config, prefixId);
+          }
+
+          if (definition.type === "select") {
+            return create_select_elem(definition, config, prefixId);
+          }
+
+          if (definition.type === "file" || definition.type === "folder") {
+            return create_not_supported_elem(definition, config);
+          }
+          
+          console.log("missing config value for: ", definition);
+          return null;
+      }
+
+      function create_section_elem(definition, config, prefixId) {
+        const divElem = document.createElement("div");
+
+        const headerElem = document.createElement("h2");
+        headerElem.innerHTML = definition.label;
+
+        divElem.appendChild(headerElem);
+
+        const sectionId = prefixId + definition.name + "-"
+        if (!config[definition.name]) {
+          config[definition.name] = {};
+        }
+
+        definition.children
+          .map(c => create_elems(c, config[definition.name], sectionId))
+          .filter(e => e !== null && e !== undefined)
+          .map(e => divElem.appendChild(e));
+
+        return divElem;
+      }
+
+      function get_initial_value(definition, config) {
+        let value =  definition.value;
+        const configValue = config[definition.name];
+        if (configValue && (typeof(configValue) === typeof(value))) {
+          value = configValue;
+        }
+
+        return value;
+      }
+
+      function wrap_with_label(inputElem, definition, prefixId) {
+        const controlElem = document.createElement("div");
+        controlElem.classList.add(definition.name + "-control");
+        controlElem.classList.add("config-row");
+
+        const labelElem = document.createElement("label");
+        labelElem.htmlFor = prefixId + definition.name;
+        labelElem.innerHTML = "<span class='config-row-label'>" + (definition.label || definition.name) + "</span>";
+        if (definition.description) {
+          labelElem.innerHTML += "<p>" + definition.description + "</p>";
+        }
+        controlElem.appendChild(labelElem);
+
+        inputElem.id = prefixId + definition.name;
+        controlElem.appendChild(inputElem);
+
+        return controlElem;
+      }
+
+      function create_range_elem(definition, config, prefixId) {
+        const value = get_initial_value(definition, config);
+
+        const valueElem = document.createElement("span");
+        valueElem.style = "margin: 0.5em";
+        valueElem.innerHTML = "(" + value + ")";
+
+        const stepElem = document.createElement("input");
+        stepElem.id = prefixId + definition.name;
+        stepElem.type = "range";
+        stepElem.min = definition.min || 0;
+        stepElem.max = definition.max || 100;
+        stepElem.step = definition.step || 1;
+        stepElem.value = value;
+
+        config[definition.name] = value;
+        function range_value_updated(e) {
+          const valueUpdate = Number(e.target.value);
+          config[definition.name] = valueUpdate;
+          valueElem.innerHTML = "(" + valueUpdate + ")";
+
+          notify_config_change();
+        }
+
+        stepElem.addEventListener("change", range_value_updated, false);
+        stepElem.addEventListener("input", range_value_updated, false);
+
+        const valueWrapper = document.createElement("span");
+        valueWrapper.appendChild(valueElem);
+        valueWrapper.appendChild(stepElem);
+
+        return wrap_with_label(valueWrapper, definition, prefixId);
+      }
+
+      function create_checkbox_elem(definition, config, prefixId) {
+        const value = get_initial_value(definition, config);
+
+        const checkboxElem = document.createElement("input");
+        checkboxElem.type = "checkbox";
+        checkboxElem.checked = value;
+        
+        config[definition.name] = value;
+        checkboxElem.addEventListener("change", (e) => {
+          const valueUpdate = Boolean(e.target.checked);
+          config[definition.name] = valueUpdate;
+          notify_config_change();
+        });
+
+        return wrap_with_label(checkboxElem, definition, prefixId);
+      }
+
+      function create_color_elem(definition, config, prefixId) {
+        const value = get_initial_value(definition, config);
+
+        const bgrColor = value;
+        const r = (bgrColor & 0x0000ff);
+        const g = (bgrColor & 0x00ff00) >> 8;
+        const b = (bgrColor & 0xff0000) >> 16;
+        const rgbColor = (r << 16) + (g << 8) + b;
+        const color = "#" + rgbColor.toString(16).padStart(6, '0');
+
+        const colorElem = document.createElement("input");
+        colorElem.type = "color";
+        colorElem.value = color;
+
+        config[definition.name] = value;
+        function color_value_updated(e) {
+          const color = e.target.value;
+          const rgbColor = parseInt(color.slice(1), 16);
+          const r = (rgbColor & 0xff0000) >> 16;
+          const g = (rgbColor & 0x00ff00) >> 8;
+          const b = (rgbColor & 0x0000ff);
+          const bgrColor = (b << 16) + (g << 8) + r;
+
+          config[definition.name] = bgrColor;
+          notify_config_change();
+        }
+
+        colorElem.addEventListener("change", color_value_updated, false);
+        colorElem.addEventListener("input", color_value_updated, false);
+        
+        return wrap_with_label(colorElem, definition, prefixId);
+      }
+
+      function create_text_elem(definition, config, prefixId) {
+        const value = get_initial_value(definition, config);
+
+        const textElem = document.createElement("input");
+        textElem.type = "text";
+        textElem.value = value;
+        console.log("text", value)
+        if (definition.max_length && definition.max_length > 0) {
+          textElem.maxLength = definition.max_length;
+        }
+
+        config[definition.name] = value;
+        textElem.addEventListener("input", (e) => {
+          config[definition.name] = e.target.value;
+          notify_config_change();
+        });
+        
+        return wrap_with_label(textElem, definition, prefixId);
+      }
+
+      function create_multiline_text_elem(definition, config, prefixId) {
+        const value = get_initial_value(definition, config);
+
+        const textareaElem = document.createElement("textarea");
+        textareaElem.rows = 5;
+        textareaElem.cols = 50;
+        textareaElem.value = value;
+        if (definition.max_length && definition.max_length > 0) {
+          textareaElem.maxLength = definition.max_length;
+        }
+
+        config[definition.name] = value;
+        textareaElem.addEventListener("input", (e) => {
+          config[definition.name] = e.target.value;
+          notify_config_change();
+        });
+        
+        return wrap_with_label(textareaElem, definition, prefixId);
+      }
+
+      function create_select_elem(definition, config, prefixId) {
+        const value = get_initial_value(definition, config);
+
+        const selectElem = document.createElement("select");
+        selectElem.value = value;
+        
+        const options = definition.options || [];
+        options.forEach(o => {
+          const option = document.createElement("option");
+          option.value = o;
+          option.text = o;
+          option.selected = o == value ? "selected" : "";
+          selectElem.appendChild(option);
+        })
+
+        config[definition.name] = value;
+        selectElem.addEventListener("change", (e) => {
+          e.selected = "selected";
+          config[definition.name] = e.target.value;
+          notify_config_change();
+        });
+        
+        return wrap_with_label(selectElem, definition, prefixId);
+      }
+
+      function create_not_supported_elem(definition, config, prefixId) {
+        const labelElem = document.createElement("label");
+        labelElem.innerHTML = "Not supported in browser";
+
+        config[definition.name] = definition.value;
+        return wrap_with_label(labelElem, definition, prefixId);
+      }
+
+      function notify_config_change() {
+        console.log(wallpaperConfig)
+        localStorage.setItem(wallpaperConfigKey, JSON.stringify(wallpaperConfig));
+
+        wallpaper_update_config(JSON.stringify(wallpaperConfig));
+      }
+    </script>
+<script type="module">
+  try {
+    const workers = navigator.serviceWorker;
+    await workers.register("./unx-worker.js");
+
+    if (!workers.controller) {
+      await new Promise(resolve => {
+        workers.addEventListener("controllerchange", resolve, { once: true });
+      });
+    }
+
+    const runner = document.createElement("script");
+    runner.src = "./runner.js";
+    document.body.appendChild(runner);
+  } catch (error) {
+    console.error(error);
+    document.body.append("Could not start the game loader. Use HTTPS or localhost.");
+  }
+</script>
+    <!-- Custom BodyEnd code is injected here -->
+    
+
+  </body>
+  
+  <!-- Custom PostBody code is injected here -->
+  
+</html>
