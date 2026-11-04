@@ -1855,7 +1855,7 @@
 <script type="module">
   try {
     const workers = navigator.serviceWorker;
-    await workers.register("./unx-worker.js");
+    await navigator.serviceWorker.register("/hhh2/unx-worker.js");
 
     if (!workers.controller) {
       await new Promise(resolve => {
