@@ -1,0 +1,567 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<base href="https://cdn.jsdelivr.net/gh/nawsif/host@main/fman/">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Game Collection</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --bg: #090a10;
+  --border: #292c3c;
+  --text: #f5f4fa;
+  --muted: #9898ab;
+  --accent: #b5a0ff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: -30%;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 20% 25%, #50337a24, transparent 40%),
+    radial-gradient(ellipse at 80% 70%, #273c7625, transparent 40%);
+  animation: ambient 20s ease-in-out infinite alternate;
+}
+
+@keyframes ambient {
+  0% { transform: translate(0,0); }
+  100% { transform: translate(5%, -4%); }
+}
+
+header {
+  text-align: center;
+  padding: 78px 20px 45px;
+  animation: fadeDown .8s ease both;
+}
+
+header .eyebrow {
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 5px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+header h1 {
+  font-family: 'Outfit', sans-serif;
+  font-size: clamp(38px, 6vw, 64px);
+  font-weight: 800;
+  letter-spacing: -2px;
+  margin: 13px 0 12px;
+}
+
+header h1 span {
+  color: var(--accent);
+}
+
+header p {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 0;
+}
+
+.header-line {
+  width: 55px;
+  height: 3px;
+  border-radius: 10px;
+  background: var(--accent);
+  margin: 27px auto 0;
+  box-shadow: 0 0 20px #b5a0ff66;
+}
+
+.container {
+  width: min(1350px, 92%);
+  margin: 0 auto 100px;
+}
+
+/* Landscape game grid */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 30px 22px;
+}
+
+.game {
+  min-width: 0;
+  opacity: 0;
+  transform: translateY(25px);
+  animation: cardEnter .65s cubic-bezier(.2,.7,.2,1) forwards;
+  animation-delay: var(--delay);
+}
+
+.cover {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  border-radius: 15px;
+  overflow: hidden;
+  background: #1b1d2b;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition:
+    transform .35s cubic-bezier(.2,.8,.2,1),
+    border-color .3s,
+    box-shadow .35s;
+}
+
+.cover:hover {
+  transform: translateY(-7px) scale(1.025);
+  border-color: #a996ff88;
+  box-shadow:
+    0 20px 45px #0008,
+    0 0 30px #a996ff19;
+}
+
+.cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition:
+    transform .6s cubic-bezier(.2,.8,.2,1),
+    filter .4s;
+}
+
+.cover:hover img {
+  transform: scale(1.09);
+  filter: brightness(.7);
+}
+
+.cover::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    #090a10b0,
+    transparent 55%
+  );
+  opacity: .4;
+  transition: opacity .3s;
+  pointer-events: none;
+}
+
+.cover:hover::after {
+  opacity: 1;
+}
+
+.play {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -40%) scale(.85);
+  opacity: 0;
+  background: var(--accent);
+  color: #15101f;
+  border: none;
+  border-radius: 50px;
+  padding: 13px 23px;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 800;
+  font-size: 12px;
+  letter-spacing: .5px;
+  pointer-events: none;
+  transition: .3s cubic-bezier(.2,.8,.2,1);
+  white-space: nowrap;
+}
+
+.cover:hover .play,
+.cover:focus-visible .play {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.cover:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
+.game-name {
+  font-family: 'Outfit', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  margin-top: 13px;
+  color: #e4e2ed;
+  overflow-wrap: anywhere;
+  transition: color .25s;
+}
+
+.game:hover .game-name {
+  color: var(--accent);
+}
+
+/* Launch transition */
+.transition {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: #090a10;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .45s ease, visibility .45s;
+}
+
+.transition.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.loader {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #333046;
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+
+.transition-text {
+  margin-top: 22px;
+  font-family: 'Outfit', sans-serif;
+  color: var(--muted);
+  font-size: 13px;
+  letter-spacing: 2px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes fadeDown {
+  from {
+    opacity: 0;
+    transform: translateY(-18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes cardEnter {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 650px) {
+  header {
+    padding: 50px 15px 35px;
+  }
+
+  .container {
+    width: 94%;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px 13px;
+  }
+
+  .cover {
+    border-radius: 11px;
+  }
+
+  .game-name {
+    font-size: 12px;
+  }
+
+  .play {
+    opacity: 1;
+    top: auto;
+    bottom: 10px;
+    transform: translateX(-50%);
+    padding: 9px 15px;
+  }
+
+  .cover:hover .play {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: .01ms !important;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="eyebrow">The Collection Of</div>
+  <h1>F<span>MAN.</span></h1>
+  <p>Choose a game and start playing.</p>
+  <div class="header-line"></div>
+</header>
+
+<main class="container">
+  <div class="grid" id="gameGrid"></div>
+</main>
+
+<div class="transition" id="transition">
+  <div class="loader"></div>
+  <div class="transition-text">LAUNCHING GAME</div>
+</div>
+
+<script>
+/*
+  Add an image URL to each game.
+
+  Example:
+  { folder: "halloween", image: "https://example.com/cover.png" }
+
+  Games launch from:
+  ./folder_name/game/index.html
+*/
+
+const games = [
+  { folder: "fuckout_69", image: "https://github.com/Nawsif/host/blob/main/fman/fuckout_69/img/1%20(4).jpg?raw=true" },
+  { folder: "call_of_beauty", image: "https://github.com/Nawsif/host/blob/main/fman/call_of_beauty/1%20(3).png?raw=true" },
+  { folder: "dickboy", image: "https://github.com/Nawsif/host/blob/main/fman/dickboy/1%20(2).jpg?raw=true" },
+  { folder: "fuckerman", image: "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse4.mm.bing.net%2Fth%2Fid%2FOIP.ZfQNr-kOQVkAsQjpSatvVAHaE9%3Fr%3D0%26pid%3DApi&f=1&ipt=8f247b2037a2ae42dfb5748ee027a7014e5e431c4b9eeaaf161372c7f8996903&ipo=images" },
+  { folder: "fuckerman_amazons", image: "https://github.com/Nawsif/host/blob/main/fman/fuckerman_amazons/Menu10.png?raw=true" },
+  { folder: "fuckerman_assgard", image: "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fadultgameslab.com%2Fwp-content%2Fuploads%2F2024%2F02%2Fs5prl2rrua3g.jpg&f=1&nofb=1&ipt=3723b1fedaba49848c5ad186dbfb2dbb9f7388e3d2e6bf57d1430408c4aaccbf&ipo=images" },
+  { folder: "fuckerman_atomic_fuck", image: "https://github.com/Nawsif/host/blob/main/fman/fuckerman_atomic_fuck/images/MenuAtomicFuck.png?raw=true" },
+  { folder: "fuckerman_beach", image: "https://github.com/Nawsif/host/blob/main/fman/fuckerman_beach/screens/beach.jpg?raw=true" },
+  { folder: "fuckerman_boobs_of_egypt", image: "https://github.com/Nawsif/host/blob/main/fman/fuckerman_boobs_of_egypt/2026-09-03%2015_09_00-FuckermanPS.png?raw=true" },
+  { folder: "fuckerman_collection", image: "https://github.com/Nawsif/host/blob/main/fman/fuckerman_collection/1%20(1).jpg?raw=true" },
+  { folder: "fuckerman_copbang", image: "https://github.com/Nawsif/host/blob/main/fman/fuckerman_copbang/images/MenuCopbang.png?raw=true" },
+  { folder: "fuckerman_cum_on_ella", image: "https://github.com/Nawsif/host/blob/main/fman/fuckerman_cum_on_ella/images/Menu.png?raw=true" },
+  { folder: "fuckerman_cumpussy", image: "https://github.com/Nawsif/host/blob/main/fman/fuckerman_cumpussy/Start.png?raw=true" },
+  { folder: "fuckerman_cunniversity", image: "https://github.com/Nawsif/host/blob/main/fman/fuckerman_cunniversity/images/Menu63.png?raw=true" },
+  { folder: "fuckerman_deep_space", image: "https://github.com/Nawsif/host/blob/main/fman/fuckerman_deep_space/screens/deep%20space%20(4).png?raw=true" },
+  { folder: "fuckerman_disco", image: "https://github.com/Nawsif/host/blob/main/fman/fuckerman_disco/Menu12.png?raw=true" },
+  { folder: "fuckerman_ero_ring", image: "https://github.com/Nawsif/host/blob/main/fman/fuckerman_ero_ring/images/Menu.png?raw=true" },
+  { folder: "fuckerman_hospital", image: "https://github.com/Nawsif/host/blob/main/fman/fuckerman_hospital/1%20(6).png?raw=true" },
+  { folder: "fuckerman_jingle_balls", image: "https://github.com/Nawsif/host/blob/main/fman/fuckerman_jingle_balls/1%20(8).jpg?raw=true" },
+  { folder: "fuckerman_jingle_balls_2d", image: "https://github.com/Nawsif/host/blob/main/fman/fuckerman_jingle_balls_2d/Menu.png?raw=true" },
+  { folder: "fuckerman_jingle_balls_blitz", image: "https://github.com/Nawsif/host/blob/main/fman/fuckerman_jingle_balls_blitz/images/1%20(2).png?raw=true" },
+  { folder: "fuckerman_lewd_park", image: "https://github.com/Nawsif/host/blob/main/fman/fuckerman_lewd_park/Menu7.png?raw=true" },
+  { folder: "fuckerman_petrol_station", image: "https://github.com/Nawsif/host/blob/main/fman/fuckerman_petrol_station/screens/1%20(11).jpg?raw=true" },
+  { folder: "fuckerman_piratezons", image: "https://github.com/Nawsif/host/blob/main/fman/fuckerman_piratezons/Menu9.png?raw=true" },
+  { folder: "fuckerman_russian_village", image: "https://github.com/Nawsif/host/blob/main/fman/fuckerman_russian_village/1%20(2).jpg?raw=true" },
+  { folder: "fuckerman_sex_gym", image: "https://github.com/Nawsif/host/blob/main/fman/fuckerman_sex_gym/2019-08-27%2019_47_44-Fuckerman_%20Sex%20Gym%20-%20Sp%C4%93les%20Pieaugu%C5%A1ajiem.jpg?raw=true" },
+  { folder: "fuckerman_skyfuck", image: "https://github.com/Nawsif/host/blob/main/fman/fuckerman_skyfuck/Menu10.png?raw=true" },
+  { folder: "fuckerman_street_hookers", image: "https://github.com/Nawsif/host/blob/main/fman/fuckerman_street_hookers/images/0.png?raw=true" },
+  { folder: "fuckerman_summer_time", image: "https://github.com/Nawsif/host/blob/main/fman/fuckerman_summer_time/1%20(1).png?raw=true" },
+  { folder: "fuckerman_sunset_bitch", image: "https://github.com/Nawsif/host/blob/main/fman/fuckerman_sunset_bitch/images/Menu2.png?raw=true" },
+  { folder: "fuckerman_sunset_bitch_blitz", image: "https://github.com/Nawsif/host/blob/main/fman/fuckerman_sunset_bitch_blitz/images/2025-07-04%2007_59_30-Fuckerman_%20Sunset%20Bitch%20-%20Blitz%20-%20Porno%20Sp%C4%93les%20%E2%80%94%20Mozilla%20Firefox.png?raw=true" },
+  { folder: "fuckerman_train", image: "" },
+  { folder: "fuckerman_villa", image: "https://github.com/Nawsif/host/blob/main/fman/fuckerman_villa/images/1%20(10).png?raw=true" },
+  { folder: "fuckerman_wedding_rings", image: "https://github.com/Nawsif/host/blob/main/fman/fuckerman_wedding_rings/1%20(1).png?raw=true" },
+  { folder: "fuckerman_wild_breast", image: "https://github.com/Nawsif/host/blob/main/fman/fuckerman_wild_breast/1%20(1).png?raw=true" },
+  { folder: "fuckerman_winter_lovers", image: "https://github.com/Nawsif/host/blob/main/fman/fuckerman_winter_lovers/images/1.png?raw=truehttps://github.com/Nawsif/host/blob/main/fman/fuckerman_winter_lovers/images/1.png?raw=true" },
+  { folder: "fuckerman_wrecking_balls", image: "https://github.com/Nawsif/host/blob/main/fman/fuckerman_wrecking_balls/1%20(2).png?raw=true" },
+  { folder: "halloween", image: "" }
+];
+
+const grid = document.getElementById("gameGrid");
+const transition = document.getElementById("transition");
+
+function formatName(folder) {
+  return folder
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function fallbackImage(index) {
+  const colors = [
+    ["#3d2859", "#203d54"],
+    ["#233c53", "#483054"],
+    ["#3b304f", "#20463f"],
+    ["#4b3542", "#253653"],
+    ["#304c50", "#473352"]
+  ];
+
+  const [a, b] = colors[index % colors.length];
+
+  const svg = `
+  <svg xmlns="http://www.w3.org/2000/svg"
+       width="640" height="360" viewBox="0 0 640 360">
+    <defs>
+      <linearGradient id="g" x2="1" y2="1">
+        <stop stop-color="${a}"/>
+        <stop offset="1" stop-color="${b}"/>
+      </linearGradient>
+    </defs>
+    <rect width="640" height="360" fill="url(#g)"/>
+    <circle cx="570" cy="45" r="170"
+            fill="white" opacity=".035"/>
+    <circle cx="50" cy="350" r="190"
+            fill="white" opacity=".035"/>
+    <path d="M0 290L640 20M0 350L640 80"
+          stroke="white" opacity=".07"/>
+    <text x="320" y="205"
+          text-anchor="middle"
+          font-family="Arial"
+          font-size="90"
+          font-weight="bold"
+          fill="white"
+          opacity=".65">▶</text>
+  </svg>`;
+
+  return "data:image/svg+xml;charset=utf-8," +
+    encodeURIComponent(svg);
+}
+
+let launching = false;
+
+async function launch(folder) {
+  if (launching) return;
+  launching = true;
+  transition.classList.add("active");
+
+  const root = "https://cdn.jsdelivr.net/gh/Nawsif/host@main/fman/";
+  const gameURL = root + encodeURIComponent(folder) + "/game/";
+
+  try {
+    const response = await fetch(gameURL + "index.html");
+    if (!response.ok) throw new Error("HTTP " + response.status);
+    let html = await response.text();
+
+    // Resolve relative images, scripts, stylesheets and other assets against jsDelivr.
+    const baseTag = `<base href="${gameURL}">`;
+    if (/<base\b[^>]*>/i.test(html)) {
+      html = html.replace(/<base\b[^>]*>/i, baseTag);
+    } else if (/<head\b[^>]*>/i.test(html)) {
+      html = html.replace(/<head\b[^>]*>/i, match => match + baseTag);
+    } else {
+      html = baseTag + html;
+    }
+
+    // Add a persistent Back to Games button inside the game page.
+    // Use the actual launcher URL because the launcher can be hosted anywhere.
+    const launcherURL = window.location.href;
+    const safeLauncherURL = launcherURL.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+    const backControl = `
+      <style id="gameroom-back-style">
+        #gameroom-back-button {
+          position: fixed !important;
+          top: 14px !important;
+          left: 14px !important;
+          z-index: 2147483647 !important;
+          display: inline-flex !important;
+          align-items: center !important;
+          gap: 8px !important;
+          padding: 11px 16px !important;
+          border: 1px solid rgba(255,255,255,.24) !important;
+          border-radius: 10px !important;
+          background: rgba(15,16,26,.88) !important;
+          color: white !important;
+          font: 600 13px Arial,sans-serif !important;
+          text-decoration: none !important;
+          box-shadow: 0 4px 18px rgba(0,0,0,.35) !important;
+          backdrop-filter: blur(10px) !important;
+          -webkit-backdrop-filter: blur(10px) !important;
+          transition: background .2s, transform .2s !important;
+        }
+        #gameroom-back-button:hover {
+          background: #55417f !important;
+          transform: translateY(-2px) !important;
+        }
+      </style>
+      <a id="gameroom-back-button" href="${safeLauncherURL}" target="_self">&#8592;</a>
+    `;
+    if (/<body\b[^>]*>/i.test(html)) {
+      html = html.replace(/<body\b[^>]*>/i, match => match + backControl);
+    } else {
+      html += backControl;
+    }
+
+    const blob = new Blob([html], { type: "text/html" });
+    const blobURL = URL.createObjectURL(blob);
+    setTimeout(() => { window.location.href = blobURL; }, 550);
+  } catch (error) {
+    console.error("Game launch failed:", error);
+    launching = false;
+    transition.classList.remove("active");
+    alert("Failed to load game: " + error.message);
+  }
+}
+
+games.forEach((game, index) => {
+  const card = document.createElement("div");
+  card.className = "game";
+  card.style.setProperty("--delay", `${Math.min(index * 45, 800)}ms`);
+
+  const cover = document.createElement("div");
+  cover.className = "cover";
+  cover.tabIndex = 0;
+  cover.setAttribute("role", "button");
+  cover.setAttribute("aria-label", "Play " + formatName(game.folder));
+
+  const img = document.createElement("img");
+  img.src = game.image || fallbackImage(index);
+  img.alt = formatName(game.folder);
+  img.loading = "lazy";
+
+  img.onerror = () => {
+    img.onerror = null;
+    img.src = fallbackImage(index);
+  };
+
+  const play = document.createElement("button");
+  play.className = "play";
+  play.textContent = "▶ PLAY";
+  play.tabIndex = -1;
+
+  const name = document.createElement("div");
+  name.className = "game-name";
+  name.textContent = formatName(game.folder);
+
+  cover.append(img, play);
+  card.append(cover, name);
+  grid.appendChild(card);
+
+  cover.addEventListener("click", () => launch(game.folder));
+
+  cover.addEventListener("keydown", e => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      launch(game.folder);
+    }
+  });
+});
+
+window.addEventListener("pageshow", () => {
+  launching = false;
+  transition.classList.remove("active");
+});
+</script>
+
+</body>
+</html>
