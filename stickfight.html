@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Stick Fight: The Game</title>
+    <style>
+      html, body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background: #000;
+        font-family: Arial, Helvetica, sans-serif;
+      }
+      #unity-canvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+        background: #000;
+      }
+      #loading-overlay {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: #0a0a0a;
+        color: #ddd;
+        font-family: monospace;
+        z-index: 999;
+      }
+      .track {
+        width: min(320px, 80vw);
+        height: 8px;
+        background: #222;
+        border-radius: 4px;
+        overflow: hidden;
+        margin-top: 14px;
+      }
+      .fill {
+        width: 0%;
+        height: 100%;
+        background: #00ff7f;
+        transition: width 0.15s ease-out;
+      }
+      .custom-controls {
+        position: fixed;
+        top: 12px;
+        right: 12px;
+        display: flex;
+        gap: 8px;
+        z-index: 10000;
+      }
+      .custom-btn {
+        background: rgba(20, 20, 20, 0.85);
+        color: #e0e0e0;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 6px;
+        padding: 6px 12px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        backdrop-filter: blur(4px);
+        transition: background 0.2s, color 0.2s;
+      }
+      .custom-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+        color: #fff;
+      }
+    </style>
+
+    <script>
+      // Gracefully suppress sandbox pointer-lock exceptions
+      const origPointerLock = Element.prototype.requestPointerLock || function() {};
+      Element.prototype.requestPointerLock = function() {
+        try {
+          const res = origPointerLock.apply(this, arguments);
+          if (res && typeof res.catch === 'function') res.catch(() => {});
+          return res;
+        } catch (e) {}
+      };
+    </script>
+  </head>
+  <body>
+    <div class="custom-controls">
+      <button class="custom-btn" id="btn-ab">🌐 About:Blank</button>
+      <button class="custom-btn" id="btn-fs">⛶ Fullscreen</button>
+    </div>
+
+    <div id="loading-overlay">
+      <div id="status">Connecting to CDN...</div>
+      <div class="track"><div class="fill" id="fill"></div></div>
+    </div>
+
+    <canvas id="unity-canvas" tabindex="-1"></canvas>
+
+    <script>
+      const CDN_BASE = "https://cdn.jsdelivr.net/gh/AlexBoops/stickfightrip@main/";
+
+      const statusEl = document.querySelector("#status");
+      const fillEl = document.querySelector("#fill");
+      const canvasEl = document.querySelector("#unity-canvas");
+      const overlayEl = document.querySelector("#loading-overlay");
+      const abBtn = document.querySelector("#btn-ab");
+      const fsBtn = document.querySelector("#btn-fs");
+
+      // Auto-hide About:Blank button when running in about:blank tab
+      const isAboutBlank = window.location.href === "about:blank" || window.origin === "null";
+      if (isAboutBlank && abBtn) {
+        abBtn.remove();
+      }
+
+      // About:Blank Cloaker
+      if (abBtn) {
+        abBtn.addEventListener("click", function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          try {
+            const win = window.open("about:blank", "_blank");
+            if (!win || win.closed) {
+              alert("Pop-up blocked. Please allow pop-ups for this site.");
+              return;
+            }
+
+            const clone = document.documentElement.cloneNode(true);
+            const oldAb = clone.querySelector("#btn-ab");
+            if (oldAb) oldAb.remove();
+
+            win.document.open();
+            win.document.write("<!DOCTYPE html>\n" + clone.outerHTML);
+            win.document.close();
+
+            win.document.title = "Google Docs";
+            const link = win.document.createElement("link");
+            link.rel = "icon";
+            link.href = "https://ssl.gstatic.com/docs/documents/images/kix-favicon7.ico";
+            win.document.head.appendChild(link);
+          } catch (err) {
+            console.error("About:blank deployment error:", err);
+          }
+        });
+      }
+
+      // Fullscreen handler
+      if (fsBtn) {
+        fsBtn.addEventListener("click", function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          const target = canvasEl || document.documentElement;
+          if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+            const req = target.requestFullscreen || target.webkitRequestFullscreen;
+            if (req) req.call(target).catch(() => {});
+          } else {
+            const exit = document.exitFullscreen || document.webkitExitFullscreen;
+            if (exit) exit.call(document).catch(() => {});
+          }
+        });
+      }
+
+      // Download and merge chunk files into in-memory blob
+      async function mergeParts(baseName, count, startPct, endPct, label) {
+        const chunks = [];
+        let totalReceived = 0;
+
+        for (let i = 1; i <= count; i++) {
+          statusEl.textContent = `Downloading ${label} (${i}/${count})...`;
+          const url = `${CDN_BASE}${baseName}.part${i}`;
+          const res = await fetch(url);
+          if (!res.ok) throw new Error(`HTTP ${res.status} on ${url}`);
+
+          const reader = res.body.getReader();
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            chunks.push(value);
+            totalReceived += value.byteLength;
+          }
+
+          const currentPct = startPct + Math.round((i / count) * (endPct - startPct));
+          fillEl.style.width = `${currentPct}%`;
+        }
+
+        const merged = new Uint8Array(totalReceived);
+        let offset = 0;
+        for (const chunk of chunks) {
+          merged.set(chunk, offset);
+          offset += chunk.length;
+        }
+
+        const mime = baseName.endsWith(".wasm.unityweb") ? "application/wasm" : "application/octet-stream";
+        return URL.createObjectURL(new Blob([merged], { type: mime }));
+      }
+
+      (async () => {
+        try {
+          // 1. Data chunks (Parts 1-4)
+          const dataBlobUrl = await mergeParts("stick-asset__6n5sjn.data.unityweb", 4, 0, 40, "game data");
+
+          // 2. WASM chunks (Parts 1-3)
+          const wasmBlobUrl = await mergeParts("stick-asset__ypxuas.wasm.unityweb", 3, 40, 70, "webassembly");
+
+          // 3. Framework script blob (resolves jsDelivr strict MIME application/octet-stream execution block)
+          statusEl.textContent = "Loading framework script...";
+          const fwRes = await fetch(CDN_BASE + "stick-asset__d840jo.framework.js.unityweb");
+          if (!fwRes.ok) throw new Error(`HTTP ${fwRes.status} on framework script`);
+          const fwText = await fwRes.text();
+          const frameworkBlobUrl = URL.createObjectURL(new Blob([fwText], { type: "application/javascript" }));
+
+          statusEl.textContent = "Booting engine...";
+
+          const config = {
+            dataUrl: dataBlobUrl,
+            frameworkUrl: frameworkBlobUrl,
+            codeUrl: wasmBlobUrl,
+            streamingAssetsUrl: CDN_BASE + "StreamingAssets",
+            companyName: "DefaultCompany",
+            productName: "StickFight",
+            productVersion: "1.0",
+          };
+
+          const loaderScript = document.createElement("script");
+          loaderScript.src = CDN_BASE + "stick-asset.loader.js";
+          loaderScript.onload = () => {
+            createUnityInstance(canvasEl, config, (progress) => {
+              fillEl.style.width = `${70 + Math.round(30 * progress)}%`;
+              statusEl.textContent = `Compiling shaders & scripts: ${Math.round(progress * 100)}%`;
+            }).then(() => {
+              overlayEl.remove();
+            }).catch((err) => {
+              statusEl.textContent = "Engine crashed on startup.";
+              console.error(err);
+            });
+          };
+
+          document.body.appendChild(loaderScript);
+        } catch (e) {
+          statusEl.textContent = "Failed downloading assets from jsDelivr.";
+          console.error("Asset merge failure:", e);
+        }
+      })();
+    </script>
+  </body>
+</html>

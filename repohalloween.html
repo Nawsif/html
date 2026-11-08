@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+  <meta charset="utf-8">
+  <base href="https://cdn.jsdelivr.net/gh/Vanta-git/repo-halloween-v1@main/">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+  <link rel="preload" as="script" fetchpriority="high" href="https://cdn.jsdelivr.net/gh/Vanta-git/repo-halloween-v1@main/Build/1234.loader.js" crossorigin>
+  <link rel="preload" as="fetch" fetchpriority="high" href="https://cdn.jsdelivr.net/gh/Vanta-git/repo-halloween-v1@main/split-manifest.json" crossorigin>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#000000">
+  <title>R.E.P.O. WebGL</title>
+
+  <style>
+    :root { color-scheme: dark; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+      color: #fff;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+    }
+
+    #unity-container {
+      position: relative;
+      width: min(100vw, calc(100vh * 16 / 9));
+      height: min(100vh, calc(100vw * 9 / 16));
+      background: #000;
+    }
+
+    #unity-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      background: #000;
+      outline: none;
+      touch-action: none;
+    }
+
+    #unity-loading-bar {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+      z-index: 5;
+      transition: opacity 0.25s ease;
+    }
+
+    #unity-progress-bar-empty {
+      width: 220px;
+      max-width: 65%;
+      height: 4px;
+      background: #292929;
+      overflow: hidden;
+      border-radius: 0;
+    }
+
+    #unity-progress-bar-full {
+      width: 0%;
+      height: 100%;
+      background: #fff;
+      transition: width 0.15s linear;
+    }
+
+    #unity-warning {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 20;
+      display: none;
+      font-size: 13px;
+    }
+
+    #unity-warning div {
+      padding: 10px 14px;
+      background: #d92b2b;
+      color: #fff;
+    }
+
+    #fullscreen-btn {
+      position: absolute;
+      right: 10px;
+      bottom: 10px;
+      z-index: 30;
+      width: 40px;
+      height: 40px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 8px;
+      background: rgba(15, 15, 18, 0.72);
+      color: #fff;
+      font-size: 19px;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #fullscreen-btn:hover {
+      background: rgba(40, 40, 46, 0.9);
+    }
+
+    #rotate-hint {
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 40;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(15, 15, 18, 0.86);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      font-size: 12px;
+      color: #d7d7de;
+      display: none;
+      pointer-events: none;
+    }
+
+    #unity-container:fullscreen {
+      width: 100vw;
+      height: 100vh;
+    }
+
+    #unity-container:fullscreen #unity-canvas {
+      width: 100%;
+      height: 100%;
+    }
+
+    @media (orientation: portrait) and (max-width: 900px) {
+      #rotate-hint { display: block; }
+      #unity-container {
+        width: 100vw;
+        height: min(100vh, calc(100vw * 9 / 16));
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="unity-container">
+    <canvas id="unity-canvas" width="960" height="600" tabindex="-1"></canvas>
+
+    <div id="unity-loading-bar">
+      <div id="unity-progress-bar-empty">
+        <div id="unity-progress-bar-full"></div>
+      </div>
+    </div>
+
+    <div id="unity-warning"></div>
+
+    <button id="fullscreen-btn" title="Fullscreen" aria-label="Fullscreen">&#9974;</button>
+  </div>
+
+  <div id="rotate-hint">Rotate your device to landscape for the best experience.</div>
+
+  <!-- The complete split.js browser shim is embedded below. -->
+  <script>
+/*
+ * split.js
+ *
+ * Big Unity WebGL build files (*.unityweb) are stored cut into 3 MB parts so no
+ * single file has to be uploaded/downloaded whole. This file does two jobs:
+ *
+ *  1. Node CLI - cuts the big files into parts and writes split-manifest.json
+ *
+ *        node split.js            split every file bigger than 15 MB into 3 MB parts
+ *        node split.js restore    put the original files back and remove the parts
+ *
+ *  2. Browser shim - included by index.html before the Unity loader. It patches
+ *     fetch (and XMLHttpRequest) so a request for Build/1234.data.unityweb is
+ *     answered with a single streaming Response that is the parts concatenated
+ *     in order. Unity never knows the difference: same URL, same bytes, same
+ *     Content-Length, progress reporting still works.
+ */
+(function () {
+  "use strict";
+
+  var CHUNK_SIZE = 3 * 1024 * 1024; // 3 MB
+  var THRESHOLD = 15 * 1024 * 1024; // files bigger than 15 MB get split
+  var MANIFEST_NAME = "split-manifest.json";
+  var READ_AHEAD = 48 * 1024 * 1024; // keep more data ready for Unity
+
+  /* ------------------------------------------------------------------ */
+  /* Node side: split / restore                                          */
+  /* ------------------------------------------------------------------ */
+
+  function runCli(argv) {
+    var fs = require("fs");
+    var path = require("path");
+    var crypto = require("crypto");
+
+    var root = __dirname;
+    var manifestPath = path.join(root, MANIFEST_NAME);
+    var command = String(argv[0] || "split").toLowerCase();
+
+    function abs(rel) {
+      return path.join(root, rel);
+    }
+
+    function pad(index, width) {
+      var text = String(index);
+      while (text.length < width) text = "0" + text;
+      return text;
+    }
+
+    function megabytes(bytes) {
+      return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+    }
+
+    var SKIP_DIRS = { ".git": 1, node_modules: 1, ".freebuff": 1 };
+
+    function walk(dir, out) {
+      var entries = fs.readdirSync(dir, { withFileTypes: true });
+      for (var i = 0; i < entries.length; i++) {
+        var entry = entries[i];
+        var full = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+          if (!SKIP_DIRS[entry.name]) walk(full, out);
+        } else if (entry.isFile()) {
+          out.push(path.relative(root, full).split(path.sep).join("/"));
+        }
+      }
+      return out;
+    }
+
+    function readExact(handle, buffer, length, position) {
+      var done = 0;
+      while (done < length) {
+        var read = fs.readSync(handle, buffer, done, length - done, position + done);
+        if (read === 0) throw new Error("unexpected end of file");
+        done += read;
+      }
+    }
+
+    function splitOne(rel, families) {
+      var file = abs(rel);
+      var size = fs.statSync(file).size;
+      var chunks = Math.ceil(size / CHUNK_SIZE);
+      var digits = Math.max(2, String(chunks - 1).length);
+
+      process.stdout.write("  " + rel + " (" + megabytes(size) + ") -> " + chunks + " parts ... ");
+
+      var original = crypto.createHash("sha256");
+      var buffer = Buffer.allocUnsafe(CHUNK_SIZE);
+      var position = 0;
+      var handle = fs.openSync(file, "r");
+      try {
+        for (var i = 0; i < chunks; i++) {
+          var length = Math.min(CHUNK_SIZE, size - position);
+          readExact(handle, buffer, length, position);
+          var slice = buffer.subarray(0, length);
+          original.update(slice);
+          fs.writeFileSync(file + ".part" + pad(i, digits), slice);
+          position += length;
+        }
+      } finally {
+        fs.closeSync(handle);
+      }
+
+      // Prove the parts really rebuild the original before deleting it.
+      var expected = original.digest("hex");
+      var rebuilt = crypto.createHash("sha256");
+      for (var j = 0; j < chunks; j++) {
+        rebuilt.update(fs.readFileSync(file + ".part" + pad(j, digits)));
+      }
+      if (rebuilt.digest("hex") !== expected) {
+        throw new Error("verification failed for " + rel + "; original left untouched");
+      }
+
+      fs.unlinkSync(file);
+      families[rel] = { parts: indexMap(chunks), size: size, sha256: expected, digits: digits };
+      console.log("ok");
+    }
+
+    function indexMap(chunks) {
+      var list = {};
+      for (var i = 0; i < chunks; i++) list[i] = true;
+      return list;
+    }
+
+    function splitAll() {
+      var previous = {};
+      if (fs.existsSync(manifestPath)) {
+        try {
+          previous = JSON.parse(fs.readFileSync(manifestPath, "utf8")).files || {};
+        } catch (error) {
+          previous = {};
+        }
+      }
+
+      var files = walk(root, []);
+      var families = {};
+      var big = [];
+      var already = 0;
+
+      for (var i = 0; i < files.length; i++) {
+        var rel = files[i];
+        var match = /^(.*)\.part(\d+)$/.exec(rel);
+        if (match) {
+          var base = match[1];
+          var index = Number(match[2]);
+          var family = families[base] || (families[base] = { parts: {}, size: 0, sha256: null, digits: 0 });
+          family.parts[index] = true;
+          family.size += fs.statSync(abs(rel)).size;
+          family.digits = Math.max(family.digits, match[2].length);
+          continue;
+        }
+        if (fs.statSync(abs(rel)).size > THRESHOLD) big.push(rel);
+      }
+
+      already = Object.keys(families).length;
+
+      if (!big.length) {
+        console.log("No file is bigger than " + megabytes(THRESHOLD) + ".");
+      } else {
+        console.log("Splitting " + big.length + " file(s) into " + megabytes(CHUNK_SIZE) + " parts:");
+        for (var k = 0; k < big.length; k++) splitOne(big[k], families);
+      }
+
+      if (already) {
+        console.log("Found " + already + " file(s) that are already split; keeping them in the manifest.");
+      }
+
+      var manifest = {
+        version: 1,
+        chunkSize: CHUNK_SIZE,
+        threshold: THRESHOLD,
+        generatedAt: new Date().toISOString(),
+        files: {}
+      };
+      var bases = Object.keys(families).sort();
+      var parts = 0;
+      for (var b = 0; b < bases.length; b++) {
+        var name = bases[b];
+        var entry = families[name];
+        var indexes = Object.keys(entry.parts)
+          .map(Number)
+          .sort(function (x, y) {
+            return x - y;
+          });
+        parts += indexes.length;
+        var known = previous[name];
+        manifest.files[name] = {
+          base: name,
+          size: entry.size,
+          chunks: indexes.length,
+          digits: entry.digits || String(indexes[indexes.length - 1]).length,
+          sha256: entry.sha256 || (known && known.size === entry.size ? known.sha256 : null)
+        };
+      }
+
+      if (!bases.length) {
+        console.log("Nothing to record in " + MANIFEST_NAME + ".");
+        return;
+      }
+
+      fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + "\n");
+      console.log("Wrote " + MANIFEST_NAME + ": " + bases.length + " file(s), " + parts + " part(s).");
+      console.log("index.html loads split.js, which reassembles them for the game.");
+    }
+
+    function restoreAll() {
+      if (!fs.existsSync(manifestPath)) throw new Error(MANIFEST_NAME + " not found; nothing to restore.");
+      var manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+      var bases = Object.keys(manifest.files || {});
+
+      for (var i = 0; i < bases.length; i++) {
+        var base = bases[i];
+        var entry = manifest.files[base];
+        var file = abs(base);
+        if (fs.existsSync(file)) {
+          console.log("  " + base + " already exists; skipping");
+          continue;
+        }
+        var hash = crypto.createHash("sha256");
+        var out = fs.openSync(file, "w");
+        try {
+          for (var p = 0; p < entry.chunks; p++) {
+            var part = fs.readFileSync(file + ".part" + pad(p, entry.digits));
+            hash.update(part);
+            fs.writeSync(out, part);
+          }
+        } finally {
+          fs.closeSync(out);
+        }
+        if (entry.sha256 && hash.digest("hex") !== entry.sha256) {
+          fs.unlinkSync(file);
+          throw new Error("restored " + base + " does not match its recorded hash");
+        }
+        for (var q = 0; q < entry.chunks; q++) fs.unlinkSync(file + ".part" + pad(q, entry.digits));
+        console.log("  restored " + base + " (" + megabytes(entry.size) + ")");
+      }
+
+      fs.unlinkSync(manifestPath);
+      console.log("Removed " + MANIFEST_NAME + ". Files are whole again.");
+    }
+
+    if (command === "split" || command === "build" || command === "all") {
+      splitAll();
+    } else if (command === "restore" || command === "join" || command === "unsplit") {
+      restoreAll();
+    } else {
+      console.error("Usage: node split.js [split|restore]");
+      process.exitCode = 1;
+    }
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Browser side: serve the parts as one response                       */
+  /* ------------------------------------------------------------------ */
+
+  function installBrowserShim(W) {
+    if (W.__unitySplitShimInstalled) return;
+    W.__unitySplitShimInstalled = true;
+
+    var nativeFetch = typeof W.fetch === "function" ? W.fetch.bind(W) : null;
+    if (!nativeFetch) return;
+
+    var manifestPromise = nativeFetch(MANIFEST_NAME, { cache: "force-cache" })
+      .then(function (response) {
+        if (!response.ok) {
+          console.warn("split.js: " + MANIFEST_NAME + " returned HTTP " + response.status + "; serving files as-is.");
+          return null;
+        }
+        return response.json();
+      })
+      .catch(function (error) {
+        console.warn("split.js: could not read " + MANIFEST_NAME + " (" + error + "); serving files as-is.");
+        return null;
+      });
+
+    function pageBase() {
+      return (W.document && W.document.baseURI) || W.location.href;
+    }
+
+    function pad(index, width) {
+      var text = String(index);
+      while (text.length < width) text = "0" + text;
+      return text;
+    }
+
+    function chunkUrl(entry, index) {
+      return new W.URL(entry.base + ".part" + pad(index, entry.digits), pageBase()).href;
+    }
+
+    // A request for .../Build/1234.data.unityweb matches the "Build/1234.data.unityweb" entry.
+    function findEntry(data, url) {
+      if (!data || !data.files || url === null) return null;
+      var pathname;
+      try {
+        pathname = decodeURIComponent(new W.URL(String(url), pageBase()).pathname);
+      } catch (error) {
+        return null;
+      }
+      var bases = Object.keys(data.files);
+      for (var i = 0; i < bases.length; i++) {
+        var tail = "/" + bases[i];
+        if (pathname === tail || pathname.slice(-tail.length) === tail) return data.files[bases[i]];
+      }
+      return null;
+    }
+
+    function fetchChunk(entry, index, init) {
+      var options = { credentials: (init && init.credentials) || "same-origin", cache: "force-cache", priority: "high" };
+      if (init && init.signal) options.signal = init.signal;
+      var url = chunkUrl(entry, index);
+      return nativeFetch(url, options).then(function (response) {
+        if (!response.ok) {
+          throw new Error("split.js: " + url + " returned HTTP " + response.status + ". Re-run `node split.js` to rebuild the parts.");
+        }
+        return response.arrayBuffer();
+      });
+    }
+
+    function isWasm(binary) {
+      var head = new Uint8Array(binary, 0, Math.min(4, binary.byteLength));
+      return head.length === 4 && head[0] === 0x00 && head[1] === 0x61 && head[2] === 0x73 && head[3] === 0x6d;
+    }
+
+    function createBody(entry, init, firstChunk) {
+      var nextToEnqueue = 0;
+      var nextToFetch = 0;
+      var pending = Object.create(null);
+      var cancelled = false;
+      var CONCURRENT_CHUNKS = 12;
+      var strategy = W.ByteLengthQueuingStrategy
+        ? new W.ByteLengthQueuingStrategy({ highWaterMark: READ_AHEAD })
+        : { highWaterMark: 8 };
+
+      function fillQueue() {
+        while (!cancelled && nextToFetch < entry.chunks && nextToFetch < nextToEnqueue + CONCURRENT_CHUNKS) {
+          (function (index) {
+            pending[index] = index === 0
+              ? Promise.resolve(firstChunk)
+              : fetchChunk(entry, index, init);
+          })(nextToFetch);
+          nextToFetch++;
+        }
+      }
+
+      fillQueue();
+      return new W.ReadableStream({
+        pull: function (controller) {
+          if (cancelled) return;
+          if (nextToEnqueue >= entry.chunks) {
+            controller.close();
+            return;
+          }
+          var index = nextToEnqueue;
+          return pending[index].then(function (binary) {
+            if (cancelled) return;
+            delete pending[index];
+            controller.enqueue(new Uint8Array(binary));
+            nextToEnqueue++;
+            fillQueue();
+            if (nextToEnqueue >= entry.chunks) controller.close();
+          });
+        },
+        cancel: function () {
+          cancelled = true;
+          pending = Object.create(null);
+        }
+      }, strategy);
+    }
+
+    function splitResponse(entry, init) {
+      return fetchChunk(entry, 0, init).then(function (firstChunk) {
+        if (!firstChunk) throw new Error("split.js: no parts for " + entry.base);
+        var headers = {
+          "Content-Type": isWasm(firstChunk) ? "application/wasm" : "application/octet-stream",
+          "Content-Length": String(entry.size)
+        };
+        return new W.Response(createBody(entry, init, firstChunk), {
+          status: 200,
+          statusText: "OK",
+          headers: headers
+        });
+      });
+    }
+
+    W.fetch = function (input, init) {
+      var method = String((init && init.method) || (input && input.method) || "GET").toUpperCase();
+      if (method !== "GET" && method !== "HEAD") return nativeFetch(input, init);
+
+      var url = typeof input === "string"
+        ? input
+        : input && typeof input.url === "string"
+          ? input.url
+          : String(input);
+
+      return manifestPromise.then(function (data) {
+        var entry = findEntry(data, url);
+        if (!entry) return nativeFetch(input, init);
+        if (method === "HEAD") {
+          return new W.Response(null, { status: 200, headers: { "Content-Length": String(entry.size) } });
+        }
+        return splitResponse(entry, init);
+      });
+    };
+
+    // Fallback for anything that still loads the build through XHR.
+    var XHR = W.XMLHttpRequest;
+    if (XHR && XHR.prototype) {
+      var nativeOpen = XHR.prototype.open;
+      var nativeSend = XHR.prototype.send;
+
+      XHR.prototype.open = function (method, url) {
+        this.__splitMethod = String(method || "GET").toUpperCase();
+        this.__splitUrl = url;
+        return nativeOpen.apply(this, arguments);
+      };
+
+      XHR.prototype.send = function () {
+        var xhr = this;
+        var args = arguments;
+        if ((xhr.__splitMethod !== "GET" && xhr.__splitMethod !== "HEAD") || !xhr.__splitUrl) {
+          return nativeSend.apply(xhr, args);
+        }
+
+        manifestPromise.then(function (data) {
+          var entry = findEntry(data, xhr.__splitUrl);
+          if (!entry) {
+            nativeSend.apply(xhr, args);
+            return;
+          }
+          assembleViaXhr(W, xhr, entry, fetchChunk, xhr.__splitUrl);
+        });
+      };
+    }
+
+    W.__unitySplit = {
+      manifest: manifestPromise,
+      chunkUrl: chunkUrl
+    };
+  }
+
+  function assembleViaXhr(W, xhr, entry, fetchChunk, url) {
+    var buffer = new Uint8Array(entry.size);
+    var received = 0;
+
+    function set(name, value) {
+      try {
+        Object.defineProperty(xhr, name, { configurable: true, value: value });
+      } catch (error) {
+        try {
+          xhr[name] = value;
+        } catch (ignored) {}
+      }
+    }
+
+    function fire(name, props) {
+      var event;
+      try {
+        event = new W.ProgressEvent(name, props || {});
+      } catch (error) {
+        try {
+          event = new W.Event(name);
+        } catch (ignored) {
+          return;
+        }
+      }
+      try {
+        xhr.dispatchEvent(event);
+      } catch (ignored) {}
+    }
+
+    // Download split pieces concurrently, then join them in their original order.
+    // This avoids waiting for each 3 MB request to finish before starting the next.
+    var completed = 0;
+    var requests = [];
+    for (var i = 0; i < entry.chunks; i++) {
+      (function (index) {
+        requests.push(fetchChunk(entry, index, null).then(function (binary) {
+          completed += binary.byteLength;
+          set("readyState", 3);
+          fire("readystatechange", { loaded: completed, total: entry.size, lengthComputable: true });
+          fire("progress", { loaded: completed, total: entry.size, lengthComputable: true });
+          return binary;
+        }));
+      })(i);
+    }
+
+    Promise.all(requests).then(function (parts) {
+      for (var partIndex = 0; partIndex < parts.length; partIndex++) {
+        var part = new Uint8Array(parts[partIndex]);
+        buffer.set(part, received);
+        received += part.byteLength;
+      }
+      var type = String(xhr.responseType || "");
+      var body = buffer.subarray(0, received);
+      var response;
+      if (type === "arraybuffer") {
+        response = body.buffer.slice(body.byteOffset, body.byteOffset + body.byteLength);
+      } else if (type === "blob") {
+        response = new W.Blob([body]);
+      } else if (type === "json") {
+        response = JSON.parse(decode(body));
+      } else if (type === "text" || type === "") {
+        response = decode(body);
+      } else {
+        response = body;
+      }
+      set("status", 200);
+      set("statusText", "OK");
+      set("responseURL", url);
+      set("response", response);
+      if (type === "" || type === "text") set("responseText", response);
+      set("readyState", 4);
+      fire("readystatechange", { loaded: received, total: entry.size, lengthComputable: true });
+      fire("progress", { loaded: received, total: entry.size, lengthComputable: true });
+      fire("load", { loaded: received, total: entry.size, lengthComputable: true });
+      fire("loadend", { loaded: received, total: entry.size, lengthComputable: true });
+    }).catch(function (error) {
+      set("status", 0);
+      set("readyState", 4);
+      fire("readystatechange", {});
+      try {
+        xhr.dispatchEvent(new W.ErrorEvent("error", { message: String(error) }));
+      } catch (ignored) {
+        fire("error", {});
+      }
+      fire("loadend", {});
+    });
+
+    function decode(bytes) {
+      if (typeof W.TextDecoder === "function") return new W.TextDecoder("utf-8").decode(bytes);
+      var text = "";
+      for (var i = 0; i < bytes.length; i++) text += String.fromCharCode(bytes[i]);
+      return text;
+    }
+  }
+
+  if (typeof module !== "undefined" && module.exports && typeof require === "function") {
+    module.exports = { chunkSize: CHUNK_SIZE, threshold: THRESHOLD };
+    if (require.main === module) runCli(process.argv.slice(2));
+  } else if (typeof window !== "undefined") {
+    installBrowserShim(window);
+  }
+})();
+
+  </script>
+
+  <script>
+    var container = document.querySelector("#unity-container");
+    var canvas = document.querySelector("#unity-canvas");
+    var loadingBar = document.querySelector("#unity-loading-bar");
+    var progressBarFull = document.querySelector("#unity-progress-bar-full");
+    var warningBanner = document.querySelector("#unity-warning");
+    var unityInstance = null;
+
+    function unityShowBanner(msg, type) {
+      var div = document.createElement("div");
+      div.textContent = msg;
+
+      if (type === "error") {
+        div.style.background = "#d92b2b";
+        div.style.color = "#fff";
+        div.style.padding = "10px";
+      }
+
+      warningBanner.appendChild(div);
+      warningBanner.style.display = "block";
+
+      if (type !== "error") {
+        setTimeout(function () {
+          if (div.parentNode) warningBanner.removeChild(div);
+          warningBanner.style.display =
+            warningBanner.children.length ? "block" : "none";
+        }, 6000);
+      }
+    }
+
+    var lowEnd = false;
+
+    try {
+      var memory = navigator.deviceMemory || 8;
+      var cores = navigator.hardwareConcurrency || 8;
+      lowEnd =
+        memory <= 4 ||
+        cores <= 4 ||
+        /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || "");
+    } catch (error) {
+      lowEnd = false;
+    }
+
+    var buildUrl = "./Build";
+    var loaderUrl = buildUrl + "/1234.loader.js";
+
+    var config = {
+      arguments: [],
+      dataUrl: buildUrl + "/1234.data.unityweb",
+      frameworkUrl: buildUrl + "/1234.framework.js.unityweb",
+      codeUrl: buildUrl + "/1234.wasm.unityweb",
+      streamingAssetsUrl: "./StreamingAssets",
+      companyName: "REPO Web",
+      productName: "R.E.P.O. WebGL",
+      productVersion: "1.0",
+      showBanner: unityShowBanner,
+      devicePixelRatio: lowEnd ? 0.7 : Math.min(window.devicePixelRatio || 1, 1),
+      autoSyncPersistentDataPath: true,
+      errorHandler: function (error, url, line) {
+        console.error("Unity WebGL error: " + error + " (" + url + ":" + line + ")");
+        return false;
+      }
+    };
+
+    function hideLoadingBar() {
+      if (!loadingBar) return;
+      loadingBar.style.opacity = "0";
+      setTimeout(function () {
+        if (loadingBar && loadingBar.parentNode) {
+          loadingBar.parentNode.removeChild(loadingBar);
+        }
+      }, 300);
+    }
+
+    var script = document.createElement("script");
+    script.src = loaderUrl;
+    script.fetchPriority = "high";
+
+    script.onload = function () {
+      if (typeof createUnityInstance !== "function") {
+        unityShowBanner("Unity loader did not initialize correctly.", "error");
+        return;
+      }
+
+      createUnityInstance(canvas, config, function (progress) {
+        progressBarFull.style.width = Math.round(progress * 100) + "%";
+      }).then(function (instance) {
+        unityInstance = instance;
+        hideLoadingBar();
+        try { canvas.focus(); } catch (error) {}
+      }).catch(function (message) {
+        console.error("Unity loading error:", message);
+        unityShowBanner("Failed to load the game: " + message, "error");
+      });
+    };
+
+    script.onerror = function () {
+      unityShowBanner(
+        "Could not load Build/1234.loader.js. Check that your build files exist.",
+        "error"
+      );
+      console.error("Unity loader failed:", loaderUrl);
+    };
+
+    document.body.appendChild(script);
+
+    document.querySelector("#fullscreen-btn").addEventListener("click", function () {
+      if (document.fullscreenElement) {
+        document.exitFullscreen();
+        return;
+      }
+
+      var request = container.requestFullscreen || container.webkitRequestFullscreen;
+      if (request) {
+        var result = request.call(container);
+        if (result && result.catch) {
+          result.catch(function (error) {
+            console.error("Fullscreen error:", error);
+          });
+        }
+
+        if (screen.orientation && screen.orientation.lock) {
+          screen.orientation.lock("landscape").catch(function () {});
+        }
+      }
+    });
+
+    function flushSaves() {
+      if (!unityInstance) return;
+      try {
+        unityInstance.SendMessage("WebGLPersistence", "Flush");
+      } catch (error) {
+        console.warn("Could not flush Unity saves:", error);
+      }
+    }
+
+    window.addEventListener("pagehide", flushSaves);
+    window.addEventListener("beforeunload", flushSaves);
+
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "hidden") flushSaves();
+    });
+
+    canvas.addEventListener("click", function () {
+      try { canvas.focus(); } catch (error) {}
+    });
+  </script>
+</body>
+</html>
