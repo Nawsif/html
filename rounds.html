@@ -7,177 +7,688 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#414141">
   <title>ROUNDS | Tinkle Games</title>
+
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="preconnect" href="https://raw.githubusercontent.com" crossorigin>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+
   <style>
-    *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#414141}html,body{height:100dvh}
-    #unity-container,#unity-canvas{position:absolute;inset:0;width:100%;height:100%;display:block}#unity-container{overflow:hidden}
-    #unity-canvas{background:#151515;outline:0;touch-action:none}
-    #web-start{position:fixed;inset:0;z-index:60;display:none;flex-direction:column;align-items:center;justify-content:center;background:#02041b;color:#f49812;font-family:Arial,sans-serif;text-align:center}
-    #web-start h1{font-size:clamp(42px,9vw,72px);letter-spacing:4px;margin:0 0 24px}
-    #web-play{padding:15px 70px;background:#f49812;color:#02041b;border:0;font-size:26px;font-weight:700;cursor:pointer}
-    #web-start p{color:#ddd}
-    #tinkle-loader{position:fixed;inset:0;z-index:70;background:#414141;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;text-align:center;color:#f6cb68;transition:opacity .7s ease,visibility .7s ease;font-family:'Orbitron',Arial,sans-serif}
-    #tinkle-loader.fading{opacity:0;visibility:hidden;pointer-events:none}
-    .tinkle-diamond{width:48px;height:48px;border:3px solid #efbd47;transform:rotate(45deg);box-shadow:0 0 18px #dca12877;animation:diamond-pulse 1.5s ease-in-out infinite;margin:0 0 12px}
-    @keyframes diamond-pulse{0%,100%{opacity:.55;scale:.9}50%{opacity:1;scale:1.1}}
-    .tinkle-title{font-weight:900;font-size:clamp(27px,6vw,53px);letter-spacing:.1em;background:linear-gradient(180deg,#fff2af 0%,#f6c55d 40%,#b97613 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
-    .tinkle-track{width:min(365px,80vw);height:10px;border:1px solid #d6a538;background:#252525;border-radius:15px;overflow:hidden;margin-top:8px}
-    #tinkle-progress{height:100%;width:0;background:linear-gradient(90deg,#b67a19,#ffdf70);transition:width .17s linear;box-shadow:0 0 12px #ffdc6d}
-    #tinkle-percent{font-size:15px;letter-spacing:.15em;color:#ffcf65}
-    #tinkle-status{font-family:Arial,sans-serif;font-size:13px;color:#dedede;max-width:85vw}
-    #retry-button{display:none;border:1px solid #d6a538;border-radius:4px;background:#352a18;color:#ffdc6d;font:700 14px Arial,sans-serif;padding:11px 24px;cursor:pointer}
-    #unity-warning{position:fixed;z-index:100;top:12px;left:50%;transform:translateX(-50%);max-width:min(700px,95vw);color:white;font:14px Arial,sans-serif;pointer-events:none}
-    #unity-warning>div{padding:12px;border-radius:6px;background:#962d28;margin-bottom:6px;overflow-wrap:anywhere}
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      background: #414141;
+    }
+
+    #unity-container, #unity-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    #unity-container { overflow: hidden; }
+
+    #unity-canvas {
+      background: #151515;
+      outline: 0;
+      touch-action: none;
+    }
+
+    #web-start {
+      position: fixed;
+      inset: 0;
+      z-index: 60;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #02041b;
+      color: #f49812;
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+
+    #web-start h1 {
+      font-size: clamp(42px,9vw,72px);
+      letter-spacing: 4px;
+      margin: 0 0 24px;
+    }
+
+    #web-play {
+      padding: 15px 70px;
+      background: #f49812;
+      color: #02041b;
+      border: 0;
+      font-size: 26px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    #web-start p { color: #ddd; }
+
+    #tinkle-loader {
+      position: fixed;
+      inset: 0;
+      z-index: 70;
+      background: #414141;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 22px;
+      text-align: center;
+      color: #f6cb68;
+      transition: opacity .7s ease, visibility .7s ease;
+      font-family: 'Orbitron', Arial, sans-serif;
+    }
+
+    #tinkle-loader.fading {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .tinkle-diamond {
+      width: 48px;
+      height: 48px;
+      border: 3px solid #efbd47;
+      transform: rotate(45deg);
+      box-shadow: 0 0 18px #dca12877;
+      animation: diamond-pulse 1.5s ease-in-out infinite;
+      margin: 0 0 12px;
+    }
+
+    @keyframes diamond-pulse {
+      0%, 100% { opacity: .55; scale: .9; }
+      50% { opacity: 1; scale: 1.1; }
+    }
+
+    .tinkle-title {
+      font-weight: 900;
+      font-size: clamp(27px,6vw,53px);
+      letter-spacing: .1em;
+      background: linear-gradient(180deg,#fff2af 0%,#f6c55d 40%,#b97613 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .tinkle-track {
+      width: min(365px,80vw);
+      height: 10px;
+      border: 1px solid #d6a538;
+      background: #252525;
+      border-radius: 15px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    #tinkle-progress {
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg,#b67a19,#ffdf70);
+      transition: width .17s linear;
+      box-shadow: 0 0 12px #ffdc6d;
+    }
+
+    #tinkle-percent {
+      font-size: 15px;
+      letter-spacing: .15em;
+      color: #ffcf65;
+    }
+
+    #tinkle-status {
+      font-family: Arial, sans-serif;
+      font-size: 13px;
+      color: #dedede;
+      max-width: 85vw;
+      overflow-wrap: anywhere;
+    }
+
+    #retry-button {
+      display: none;
+      border: 1px solid #d6a538;
+      border-radius: 4px;
+      background: #352a18;
+      color: #ffdc6d;
+      font: 700 14px Arial, sans-serif;
+      padding: 11px 24px;
+      cursor: pointer;
+    }
+
+    #unity-warning {
+      position: fixed;
+      z-index: 100;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      max-width: min(700px,95vw);
+      color: white;
+      font: 14px Arial, sans-serif;
+      pointer-events: none;
+    }
+
+    #unity-warning > div {
+      padding: 12px;
+      border-radius: 6px;
+      background: #962d28;
+      margin-bottom: 6px;
+      overflow-wrap: anywhere;
+    }
   </style>
 </head>
+
 <body>
   <div id="unity-container">
     <canvas id="unity-canvas" tabindex="-1"></canvas>
-    <div id="web-start"><h1>ROUNDS</h1><button id="web-play">PLAY</button><p>Ported by zaddy</p></div>
+
+    <div id="web-start">
+      <h1>ROUNDS</h1>
+      <button id="web-play">PLAY</button>
+      <p>Ported by zaddy</p>
+    </div>
+
     <div id="tinkle-loader" role="status" aria-live="polite">
       <div class="tinkle-diamond"></div>
-      <div class="tinkle-track"><div id="tinkle-progress"></div></div>
+      <div class="tinkle-track">
+        <div id="tinkle-progress"></div>
+      </div>
       <div id="tinkle-percent">0%</div>
       <div id="tinkle-status">Preparing game...</div>
       <button id="retry-button" type="button">RETRY</button>
     </div>
+
     <div id="unity-warning"></div>
   </div>
+
   <script>
   (() => {
-    const buildUrl = 'Build';
-    const canvas = document.getElementById('unity-canvas');
-    const loader = document.getElementById('tinkle-loader');
-    const bar = document.getElementById('tinkle-progress');
-    const percent = document.getElementById('tinkle-percent');
-    const status = document.getElementById('tinkle-status');
-    const retryButton = document.getElementById('retry-button');
-    const warnings = document.getElementById('unity-warning');
-    const blobUrls = [];
+    "use strict";
+
+    const REVISION =
+      "baec8a7a378b17584cfb9e1851855236ac81cd3d";
+
+    const CDN_ROOT =
+      `https://cdn.jsdelivr.net/gh/nawsif/host@${REVISION}/ROUNDS/`;
+
+    const RAW_ROOT =
+      `https://raw.githubusercontent.com/nawsif/host/${REVISION}/ROUNDS/`;
+
+    const BUILD_PATH = "Build/";
+
+    const MAX_CONCURRENT = 3;
+    const MAX_ATTEMPTS = 3;
+    const REQUEST_TIMEOUT = 45000;
+
+    const canvas = document.getElementById("unity-canvas");
+    const loader = document.getElementById("tinkle-loader");
+    const bar = document.getElementById("tinkle-progress");
+    const percent = document.getElementById("tinkle-percent");
+    const status = document.getElementById("tinkle-status");
+    const retryButton = document.getElementById("retry-button");
+    const warnings = document.getElementById("unity-warning");
+
     const parts = [
-      ...['aa','ab','ac','ad','ae','af'].map(s => ({name:`WebBuild.data.part-${s}`, kind:'data'})),
-      ...['aa','ab','ac','ad','ae'].map(s => ({name:`WebBuild.wasm.part-${s}`, kind:'wasm'}))
+      ...["aa","ab","ac","ad","ae","af"].map(s => ({
+        name: `WebBuild.data.part-${s}`,
+        kind: "data"
+      })),
+      ...["aa","ab","ac","ad","ae"].map(s => ({
+        name: `WebBuild.wasm.part-${s}`,
+        kind: "wasm"
+      }))
     ];
+
     const loadedParts = new Map();
+    const blobUrls = [];
+    const controllers = new Set();
+
     let lastProgress = 0;
     let running = false;
     let completed = false;
-    const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+    let unityStarted = false;
+    let preferredSource = 0;
+
+    const delay = ms =>
+      new Promise(resolve => setTimeout(resolve, ms));
 
     function progress(value, message) {
-      lastProgress = Math.max(lastProgress, Math.min(100, value));
-      bar.style.width = lastProgress + '%';
-      percent.textContent = Math.floor(lastProgress) + '%';
+      lastProgress = Math.max(
+        lastProgress,
+        Math.min(100, value)
+      );
+
+      bar.style.width = lastProgress + "%";
+      percent.textContent = Math.floor(lastProgress) + "%";
+
       if (message) status.textContent = message;
     }
-    function warning(message, type = 'error') {
-      const div = document.createElement('div');
+
+    function warning(message, type = "error") {
+      const div = document.createElement("div");
       div.textContent = message;
-      if (type === 'warning') div.style.background = '#9b740d';
+
+      if (type === "warning") {
+        div.style.background = "#9b740d";
+      }
+
       warnings.appendChild(div);
-      if (type !== 'error') setTimeout(() => div.remove(), 5000);
-    }
-    function addCacheBust(url) {
-      const u = new URL(url, document.baseURI);
-      u.searchParams.set('_attempt', Date.now().toString());
-      return u.href;
-    }
-    async function fetchWithRetry(url, name, options = {}) {
-      const {attempts = 12, timeout = 35000, responseType = 'blob'} = options;
-      for (let attempt = 1; attempt <= attempts; attempt++) {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), timeout);
-        try {
-          // Query strings prevent a temporarily cached CDN error from blocking later tries.
-          const response = await fetch(attempt === 1 ? new URL(url, document.baseURI).href : addCacheBust(url),
-            {signal:controller.signal, cache: attempt === 1 ? 'default' : 'no-store'});
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-          const result = responseType === 'blob' ? await response.blob() : await response.text();
-          if (responseType === 'blob' && !result.size) throw new Error('Empty download');
-          return result;
-        } catch (error) {
-          if (attempt === attempts) throw new Error(`${name}: ${error.message} after ${attempts} attempts`);
-          console.warn(`Retrying ${name} (${attempt}/${attempts})`, error);
-          status.textContent = `Retrying ${name} (${attempt}/${attempts})...`;
-          // Capped backoff with jitter to avoid hammering a CDN when it is down.
-          await delay(Math.min(8000, 700 * Math.pow(1.6, attempt - 1)) + Math.random() * 400);
-        } finally {
-          clearTimeout(timeoutId);
-        }
+
+      if (type !== "error") {
+        setTimeout(() => div.remove(), 5000);
       }
     }
+
+    function sources(path) {
+      return [
+        new URL(path, CDN_ROOT).href,
+        new URL(path, RAW_ROOT).href
+      ];
+    }
+
+    function cacheBust(url) {
+      const u = new URL(url);
+      u.searchParams.set("_attempt", Date.now().toString());
+      return u.href;
+    }
+
+    async function fetchOnce(url, responseType, timeout) {
+      const controller = new AbortController();
+      controllers.add(controller);
+
+      const timer = setTimeout(
+        () => controller.abort(),
+        timeout
+      );
+
+      try {
+        const response = await fetch(url, {
+          method: "GET",
+          mode: "cors",
+          credentials: "omit",
+          redirect: "follow",
+          signal: controller.signal,
+          cache: "default"
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        if (response.type === "opaque") {
+          throw new Error("Opaque response cannot be read");
+        }
+
+        const contentType =
+          response.headers.get("content-type") || "";
+
+        if (responseType === "blob") {
+          const blob = await response.blob();
+
+          if (!blob.size) {
+            throw new Error("Empty binary response");
+          }
+
+          // Detect common error pages masquerading as binary files.
+          if (
+            contentType.includes("text/html") ||
+            contentType.includes("application/json")
+          ) {
+            throw new Error(
+              `Unexpected response type: ${contentType}`
+            );
+          }
+
+          return blob;
+        }
+
+        const text = await response.text();
+
+        if (!text.trim()) {
+          throw new Error("Empty script response");
+        }
+
+        if (contentType.includes("text/html")) {
+          throw new Error("Received HTML instead of JavaScript");
+        }
+
+        return text;
+      } finally {
+        clearTimeout(timer);
+        controllers.delete(controller);
+      }
+    }
+
+    async function fetchWithFallback(
+      path,
+      name,
+      options = {}
+    ) {
+      const {
+        responseType = "blob",
+        timeout = REQUEST_TIMEOUT
+      } = options;
+
+      const urls = sources(path);
+
+      // Prefer the last successful provider, but always
+      // retain the alternative provider as fallback.
+      const order = preferredSource === 1
+        ? [1, 0]
+        : [0, 1];
+
+      let lastError;
+
+      for (const sourceIndex of order) {
+        const originalUrl = urls[sourceIndex];
+
+        for (
+          let attempt = 1;
+          attempt <= MAX_ATTEMPTS;
+          attempt++
+        ) {
+          try {
+            status.textContent =
+              `Downloading ${name}...`;
+
+            const url = attempt === 1
+              ? originalUrl
+              : cacheBust(originalUrl);
+
+            const result = await fetchOnce(
+              url,
+              responseType,
+              timeout
+            );
+
+            preferredSource = sourceIndex;
+
+            console.info(
+              `[ROUNDS] Loaded ${name} from`,
+              sourceIndex === 0 ? "jsDelivr" : "GitHub Raw"
+            );
+
+            return result;
+          } catch (error) {
+            lastError = error;
+
+            console.warn(
+              `[ROUNDS] ${name}: source ${
+                sourceIndex === 0 ? "jsDelivr" : "GitHub Raw"
+              }, attempt ${attempt}/${MAX_ATTEMPTS}`,
+              error
+            );
+
+            if (attempt < MAX_ATTEMPTS) {
+              await delay(
+                Math.min(4000, 600 * Math.pow(2, attempt - 1))
+              );
+            }
+          }
+        }
+
+        console.warn(
+          `[ROUNDS] Switching download source for ${name}`
+        );
+      }
+
+      throw new Error(
+        `${name}: ${lastError?.message || "All sources failed"}`
+      );
+    }
+
     async function fetchPart(part) {
-      if (loadedParts.has(part.name)) return loadedParts.get(part.name);
-      const blob = await fetchWithRetry(`${buildUrl}/${part.name}`, part.name);
+      if (loadedParts.has(part.name)) {
+        return loadedParts.get(part.name);
+      }
+
+      const path = BUILD_PATH + part.name;
+
+      const blob = await fetchWithFallback(
+        path,
+        part.name
+      );
+
       loadedParts.set(part.name, blob);
-      progress((loadedParts.size / parts.length) * 65, `Downloading files (${loadedParts.size}/${parts.length})...`);
+
+      const count = loadedParts.size;
+
+      progress(
+        (count / parts.length) * 65,
+        `Downloading game files (${count}/${parts.length})...`
+      );
+
       return blob;
     }
+
+    async function downloadParts() {
+      const queue = parts.filter(
+        part => !loadedParts.has(part.name)
+      );
+
+      let nextIndex = 0;
+      let failure = null;
+
+      async function worker() {
+        while (!failure) {
+          const index = nextIndex++;
+
+          if (index >= queue.length) {
+            return;
+          }
+
+          try {
+            await fetchPart(queue[index]);
+          } catch (error) {
+            failure = error;
+            return;
+          }
+        }
+      }
+
+      const workerCount = Math.min(
+        MAX_CONCURRENT,
+        queue.length
+      );
+
+      await Promise.all(
+        Array.from(
+          { length: workerCount },
+          () => worker()
+        )
+      );
+
+      if (failure) throw failure;
+    }
+
     function makeMergedUrl(kind, mime) {
-      const blobs = parts.filter(part => part.kind === kind).map(part => loadedParts.get(part.name));
-      if (blobs.some(x => !x)) throw new Error(`Missing ${kind} chunks`);
-      const url = URL.createObjectURL(new Blob(blobs, {type:mime}));
+      const blobs = parts
+        .filter(part => part.kind === kind)
+        .map(part => loadedParts.get(part.name));
+
+      if (blobs.some(blob => !blob || !blob.size)) {
+        throw new Error(`Missing ${kind} chunks`);
+      }
+
+      const merged = new Blob(blobs, { type: mime });
+      const url = URL.createObjectURL(merged);
+
       blobUrls.push(url);
+
+      console.info(
+        `[ROUNDS] Combined ${kind}:`,
+        merged.size,
+        "bytes"
+      );
+
       return url;
     }
-    const config = {
-      dataUrl: '', frameworkUrl: `${buildUrl}/WebBuild.framework.js`, codeUrl: '',
-      streamingAssetsUrl: 'StreamingAssets', companyName: 'Landfall Games',
-      productName: 'ROUNDS', productVersion: '1.1.2', showBanner: warning
-    };
-    async function loadUnityLoader() {
-      // Retrying script text rather than adding another <script> lets a failed loader request recover.
-      const source = await fetchWithRetry(`${buildUrl}/WebBuild.loader.js`, 'Unity loader', {responseType:'text'});
-      const tag = document.createElement('script');
-      tag.textContent = `${source}\n//# sourceURL=WebBuild.loader.js`;
-      document.body.appendChild(tag);
-      if (typeof createUnityInstance !== 'function') throw new Error('Unity loader did not initialize.');
+
+    function cleanupBlobUrls() {
+      for (const url of blobUrls.splice(0)) {
+        URL.revokeObjectURL(url);
+      }
     }
+
+    const config = {
+      dataUrl: "",
+      frameworkUrl: new URL(
+        BUILD_PATH + "WebBuild.framework.js",
+        CDN_ROOT
+      ).href,
+      codeUrl: "",
+      streamingAssetsUrl: new URL(
+        "StreamingAssets/",
+        CDN_ROOT
+      ).href,
+      companyName: "Landfall Games",
+      productName: "ROUNDS",
+      productVersion: "1.1.2",
+      showBanner: warning
+    };
+
+    async function loadUnityLoader() {
+      if (typeof createUnityInstance === "function") {
+        return;
+      }
+
+      const source = await fetchWithFallback(
+        BUILD_PATH + "WebBuild.loader.js",
+        "Unity loader",
+        { responseType: "text" }
+      );
+
+      const tag = document.createElement("script");
+      tag.textContent =
+        source + "\n//# sourceURL=WebBuild.loader.js";
+
+      document.body.appendChild(tag);
+
+      if (typeof createUnityInstance !== "function") {
+        throw new Error(
+          "Unity loader did not initialize"
+        );
+      }
+    }
+
     async function startGame() {
-      if (running || completed) return;
+      if (running || completed || unityStarted) return;
+
       running = true;
-      retryButton.style.display = 'none';
-      warnings.textContent = '';
-      loader.style.display = 'flex';
-      loader.classList.remove('fading');
-      progress(lastProgress, 'Downloading game files...');
+      retryButton.style.display = "none";
+      warnings.textContent = "";
+
+      loader.style.display = "flex";
+      loader.classList.remove("fading");
+
+      progress(
+        lastProgress,
+        "Connecting to game servers..."
+      );
+
       try {
-        // Start all network requests as soon as this page executes.
-        const jobs = parts.map(fetchPart);
-        const scriptJob = typeof createUnityInstance === 'function' ? Promise.resolve() : loadUnityLoader();
-        await Promise.all([...jobs, scriptJob]);
-        config.dataUrl = makeMergedUrl('data', 'application/octet-stream');
-        config.codeUrl = makeMergedUrl('wasm', 'application/wasm');
-        progress(65, 'Starting Unity...');
-        await createUnityInstance(canvas, config, p => progress(65 + p * 35, 'Loading ROUNDS...'));
+        // Loader and chunk downloads can proceed together.
+        const results = await Promise.allSettled([
+          downloadParts(),
+          loadUnityLoader()
+        ]);
+
+        const failed = results.find(
+          result => result.status === "rejected"
+        );
+
+        if (failed) {
+          throw failed.reason;
+        }
+
+        progress(65, "Combining game files...");
+
+        config.dataUrl = makeMergedUrl(
+          "data",
+          "application/octet-stream"
+        );
+
+        config.codeUrl = makeMergedUrl(
+          "wasm",
+          "application/wasm"
+        );
+
+        // Use the same successful source for framework JS.
+        config.frameworkUrl = sources(
+          BUILD_PATH + "WebBuild.framework.js"
+        )[preferredSource];
+
+        config.streamingAssetsUrl = sources(
+          "StreamingAssets/"
+        )[preferredSource];
+
+        progress(65, "Starting Unity...");
+
+        unityStarted = true;
+
+        await createUnityInstance(
+          canvas,
+          config,
+          p => progress(
+            65 + p * 35,
+            "Loading ROUNDS..."
+          )
+        );
+
         completed = true;
-        progress(100, 'Ready!');
-        loader.classList.add('fading');
-        setTimeout(() => { loader.style.display = 'none'; }, 750);
-      } catch (err) {
-        console.error('Game loading failed:', err);
-        status.textContent = `Download failed: ${err.message || String(err)}`;
-        retryButton.style.display = 'inline-block';
-        // Keep successful chunks so retry requests only download missing files.
-        // Remove failed round's temporary merged object URLs before trying again.
-        blobUrls.splice(0).forEach(url => URL.revokeObjectURL(url));
-        config.dataUrl = '';
-        config.codeUrl = '';
+        progress(100, "Ready!");
+
+        loader.classList.add("fading");
+
+        setTimeout(() => {
+          loader.style.display = "none";
+        }, 750);
+      } catch (error) {
+        console.error(
+          "[ROUNDS] Game loading failed:",
+          error
+        );
+
+        status.textContent =
+          `Loading failed: ${error.message || String(error)}`;
+
+        // A Unity initialization failure may leave a partial
+        // runtime behind, so don't blindly create another one.
+        if (!unityStarted) {
+          retryButton.style.display = "inline-block";
+
+          cleanupBlobUrls();
+          config.dataUrl = "";
+          config.codeUrl = "";
+        } else {
+          status.textContent +=
+            " — Reload the page to retry.";
+        }
       } finally {
         running = false;
       }
     }
-    retryButton.addEventListener('click', () => {
-      // Optional fullscreen is only possible after a user click, never on automatic load.
-      if (document.fullscreenEnabled && !document.fullscreenElement) {
-        document.documentElement.requestFullscreen({navigationUI:'hide'}).catch(() => {});
-      }
+
+    retryButton.addEventListener("click", () => {
       startGame();
     });
-    window.addEventListener('pagehide', () => blobUrls.forEach(url => URL.revokeObjectURL(url)));
+
+    window.addEventListener("pagehide", () => {
+      for (const controller of controllers) {
+        controller.abort();
+      }
+
+      cleanupBlobUrls();
+    });
+
     startGame();
   })();
   </script>
