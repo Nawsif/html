@@ -209,6 +209,69 @@
     <div id="unity-warning"></div>
   </div>
 
+  
+<script>
+(() => {
+  const OriginalWebSocket = window.WebSocket;
+
+  window.WebSocket = class extends OriginalWebSocket {
+    constructor(url, protocols) {
+      const original = String(url);
+      let destination = original;
+
+      try {
+        const parsed = new URL(original);
+
+        if (
+          parsed.protocol === "wss:" &&
+          (
+            parsed.hostname.endsWith(".exitgames.com") ||
+            parsed.hostname === "exitgames.com" ||
+            parsed.hostname.endsWith(".photonengine.com") ||
+            parsed.hostname === "photonengine.com"
+          )
+        ) {
+          const proxy = new URL(
+            "/__rounds_photon/",
+            window.location.origin
+          );
+
+          proxy.protocol =
+            location.protocol === "https:" ? "wss:" : "ws:";
+
+          proxy.searchParams.set("host", parsed.hostname);
+          proxy.searchParams.set(
+            "path",
+            parsed.pathname
+          );
+
+          for (const [key, value] of parsed.searchParams) {
+            proxy.searchParams.append(key, value);
+          }
+
+          destination = proxy.href;
+
+          console.log(
+            "[ROUNDS Photon Proxy]",
+            parsed.hostname,
+            "→",
+            destination
+          );
+        }
+      } catch (error) {
+        console.warn("[ROUNDS] WebSocket URL error:", error);
+      }
+
+      if (protocols === undefined) {
+        super(destination);
+      } else {
+        super(destination, protocols);
+      }
+    }
+  };
+})();
+</script>
+
   <script>
   (() => {
     "use strict";
