@@ -372,36 +372,81 @@
     }
 
     
-async function fetchWithFallback(path, name, options = {}) {
-  const {
-    responseType = "blob",
-    timeout = REQUEST_TIMEOUT
-  } = options;
 
+async function fetchWithFallback(path, name, options = {}) {
+  const responseType = options.responseType || "blob";
+  const maxAttempts = 4;
   const url = sources(path)[0];
+
   let lastError;
 
-  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
-      status.textContent = `Downloading ${name}...`;
-
-      const result = await fetchOnce(
-        attempt === 1 ? url : cacheBust(url),
-        responseType,
-        timeout
+      console.log(
+        `[ROUNDS] Downloading ${name} (${attempt}/${maxAttempts})`
       );
 
-      console.info(`[ROUNDS] Loaded ${name}`);
-      return result;
+      // Match the successful Console test.
+      // Do not use the old fetchOnce() timeout logic.
+      const response = await fetch(url, {
+        method: "GET",
+        cache: "default"
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const expected = Number(
+        response.headers.get("content-length")
+      );
+
+      const reader = response.body.getReader();
+      const chunks = [];
+      let received = 0;
+
+      while (true) {
+        const { done, value } = await reader.read();
+
+        if (done) break;
+
+        chunks.push(value);
+        received += value.byteLength;
+      }
+
+      if (expected && received !== expected) {
+        throw new Error(
+          `Incomplete download: ${received}/${expected} bytes`
+        );
+      }
+
+      console.log(
+        `[ROUNDS] ${name} downloaded: ${received} bytes`
+      );
+
+      const blob = new Blob(chunks);
+
+      if (responseType === "text") {
+        return await blob.text();
+      }
+
+      if (responseType === "arrayBuffer") {
+        return await blob.arrayBuffer();
+      }
+
+      return blob;
     } catch (error) {
       lastError = error;
+
       console.warn(
-        `[ROUNDS] ${name} attempt ${attempt}/${MAX_ATTEMPTS}`,
+        `[ROUNDS] ${name} failed on attempt ${attempt}:`,
         error
       );
 
-      if (attempt < MAX_ATTEMPTS) {
-        await delay(1000 * attempt);
+      if (attempt < maxAttempts) {
+        await new Promise(resolve =>
+          setTimeout(resolve, attempt * 1500)
+        );
       }
     }
   }
