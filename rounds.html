@@ -225,7 +225,7 @@
     const BUILD_PATH = "Build/";
 
     const MAX_CONCURRENT = 3;
-    const MAX_ATTEMPTS = 3;
+    const MAX_ATTEMPTS = 2;
     const REQUEST_TIMEOUT = 45000;
 
     const canvas = document.getElementById("unity-canvas");
@@ -288,11 +288,15 @@
     }
 
     function sources(path) {
-      return [
-        new URL(path, CDN_ROOT).href,
-        new URL(path, RAW_ROOT).href
-      ];
-    }
+  const localPath = path.replace(/^\/+/, "");
+
+  return [
+    new URL(
+      "/__rounds_assets/" + localPath,
+      window.location.origin
+    ).href
+  ];
+}
 
     function cacheBust(url) {
       const u = new URL(url);
@@ -367,83 +371,46 @@
       }
     }
 
-    async function fetchWithFallback(
-      path,
-      name,
-      options = {}
-    ) {
-      const {
-        responseType = "blob",
-        timeout = REQUEST_TIMEOUT
-      } = options;
+    
+async function fetchWithFallback(path, name, options = {}) {
+  const {
+    responseType = "blob",
+    timeout = REQUEST_TIMEOUT
+  } = options;
 
-      const urls = sources(path);
+  const url = sources(path)[0];
+  let lastError;
 
-      // Prefer the last successful provider, but always
-      // retain the alternative provider as fallback.
-      const order = preferredSource === 1
-        ? [1, 0]
-        : [0, 1];
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      status.textContent = `Downloading ${name}...`;
 
-      let lastError;
-
-      for (const sourceIndex of order) {
-        const originalUrl = urls[sourceIndex];
-
-        for (
-          let attempt = 1;
-          attempt <= MAX_ATTEMPTS;
-          attempt++
-        ) {
-          try {
-            status.textContent =
-              `Downloading ${name}...`;
-
-            const url = attempt === 1
-              ? originalUrl
-              : cacheBust(originalUrl);
-
-            const result = await fetchOnce(
-              url,
-              responseType,
-              timeout
-            );
-
-            preferredSource = sourceIndex;
-
-            console.info(
-              `[ROUNDS] Loaded ${name} from`,
-              sourceIndex === 0 ? "jsDelivr" : "GitHub Raw"
-            );
-
-            return result;
-          } catch (error) {
-            lastError = error;
-
-            console.warn(
-              `[ROUNDS] ${name}: source ${
-                sourceIndex === 0 ? "jsDelivr" : "GitHub Raw"
-              }, attempt ${attempt}/${MAX_ATTEMPTS}`,
-              error
-            );
-
-            if (attempt < MAX_ATTEMPTS) {
-              await delay(
-                Math.min(4000, 600 * Math.pow(2, attempt - 1))
-              );
-            }
-          }
-        }
-
-        console.warn(
-          `[ROUNDS] Switching download source for ${name}`
-        );
-      }
-
-      throw new Error(
-        `${name}: ${lastError?.message || "All sources failed"}`
+      const result = await fetchOnce(
+        attempt === 1 ? url : cacheBust(url),
+        responseType,
+        timeout
       );
+
+      console.info(`[ROUNDS] Loaded ${name}`);
+      return result;
+    } catch (error) {
+      lastError = error;
+      console.warn(
+        `[ROUNDS] ${name} attempt ${attempt}/${MAX_ATTEMPTS}`,
+        error
+      );
+
+      if (attempt < MAX_ATTEMPTS) {
+        await delay(1000 * attempt);
+      }
     }
+  }
+
+  throw new Error(
+    `${name}: ${lastError?.message || "Download failed"}`
+  );
+}
+
 
     async function fetchPart(part) {
       if (loadedParts.has(part.name)) {
@@ -539,21 +506,17 @@
     }
 
     const config = {
-      dataUrl: "",
-      frameworkUrl: new URL(
-        BUILD_PATH + "WebBuild.framework.js",
-        CDN_ROOT
-      ).href,
-      codeUrl: "",
-      streamingAssetsUrl: new URL(
-        "StreamingAssets/",
-        CDN_ROOT
-      ).href,
-      companyName: "Landfall Games",
-      productName: "ROUNDS",
-      productVersion: "1.1.2",
-      showBanner: warning
-    };
+  dataUrl: "",
+  frameworkUrl: sources(
+    "Build/WebBuild.framework.js"
+  )[0],
+  codeUrl: "",
+  streamingAssetsUrl: sources("StreamingAssets/")[0],
+  companyName: "Landfall Games",
+  productName: "ROUNDS",
+  productVersion: "1.1.2",
+  showBanner: warning
+};
 
     async function loadUnityLoader() {
       if (typeof createUnityInstance === "function") {
